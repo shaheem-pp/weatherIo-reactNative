@@ -11,13 +11,13 @@ export const colors = {
 
 	// Background Gradients for Different Weather Conditions
 	gradients: {
-		clear: ["#4A90E2", "#5B9FED", "#87CEEB"],
-		clouds: ["#6B7B8C", "#8B9CAD", "#B0BEC5"],
-		rain: ["#3D5A80", "#4A6FA5", "#5B8BB5"],
-		thunderstorm: ["#2C3E50", "#34495E", "#4A5F7F"],
-		snow: ["#E8F4F8", "#B8D4E0", "#93C5DC"],
-		mist: ["#95A5A6", "#B2C4C6", "#D0DBE0"],
-		drizzle: ["#5B8AA8", "#6FA8C8", "#87C3DB"],
+		clear: ["#4A90E2", "#5B9FED", "#87CEEB"] as const,
+		clouds: ["#6B7B8C", "#8B9CAD", "#B0BEC5"] as const,
+		rain: ["#3D5A80", "#4A6FA5", "#5B8BB5"] as const,
+		thunderstorm: ["#2C3E50", "#34495E", "#4A5F7F"] as const,
+		snow: ["#E8F4F8", "#B8D4E0", "#93C5DC"] as const,
+		mist: ["#95A5A6", "#B2C4C6", "#D0DBE0"] as const,
+		drizzle: ["#5B8AA8", "#6FA8C8", "#87C3DB"] as const,
 	},
 
 	// UI Colors

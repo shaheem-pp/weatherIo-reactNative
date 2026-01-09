@@ -92,11 +92,11 @@ export const getWindDirection = (degrees: number): string => {
 /**
  * Formats wind speed with unit
  * @param speed - Wind speed in m/s
- * @returns Formatted wind speed in km/h (e.g., "18.7 km/h")
+ * @returns Formatted wind speed in km/h as integer (e.g., "19 km/h")
  */
 export const formatWindSpeed = (speed: number): string => {
-	const kmh = speed * 3.6;
-	return `${kmh.toFixed(1)} km/h`;
+	const kmh = Math.round(speed * 3.6);
+	return `${kmh} km/h`;
 };
 
 /**

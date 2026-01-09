@@ -5,39 +5,56 @@ A modern, beautifully designed weather application built with React Native and E
 ## Features ✨
 
 - **Real-time Location Access**: Automatically fetches your current location
-- **Current Weather**: Displays temperature, conditions, humidity, wind speed, and more
-- **Beautiful UI**: Dynamic gradients that change based on weather conditions
-- **Smooth Animations**: Elegant loading states and transitions
-- **Pull to Refresh**: Easy refresh functionality
-- **Error Handling**: Graceful error messages with retry options
+- **City Search**: Search any city with smart dropdown suggestions of 20 popular cities worldwide
+- **Current Weather**: Displays temperature, conditions, humidity, wind speed, pressure, and visibility
+- **Beautiful UI/UX**: 
+  - Dynamic gradients that change based on weather conditions
+  - Glass-morphism cards with depth and shadows
+  - Smooth entrance animations with spring physics
+  - Staggered card animations for professional feel
+- **Smooth Animations**: 
+  - Pulsing and rotating loading screen
+  - Fade-in effects on content
+  - Shake animation on errors
+  - Animated dropdown suggestions
+- **Pull to Refresh**: Easy refresh functionality for both location and searched cities
+- **Error Handling**: Graceful error messages with animated retry options
 - **Secure API Key**: Environment variable configuration for API key security
+- **Integer Wind Speed**: Clean whole number display in km/h (e.g., "19 km/h" not "18.7 km/h")
 
 ## Tech Stack 🛠️
 
 - **React Native** with Expo
 - **TypeScript** for type safety
 - **Expo Location** for geolocation
-- **Axios** for API calls
-- **Expo Linear Gradient** for beautiful gradients
-- **@expo/vector-icons** for icons
-
-## Project Structure 📁
-
-```
-weatherio/
-├── src/
-│   ├── components/         # Reusable UI components
-│   │   ├── WeatherCard.tsx
-│   │   ├── LoadingScreen.tsx
-│   │   ├── ErrorScreen.tsx
+- **Axios** for API calls       # Main weather display with animations
+│   │   ├── SearchBar.tsx         # Search with dropdown suggestions
+│   │   ├── LoadingScreen.tsx     # Animated loading state
+│   │   ├── ErrorScreen.tsx       # Animated error handling
 │   │   └── index.ts
 │   ├── screens/           # Screen components
-│   │   └── HomeScreen.tsx
+│   │   └── HomeScreen.tsx        # Main app screen
 │   ├── services/          # API services
-│   │   └── weatherService.ts
+│   │   └── weatherService.ts     # OpenWeatherMap API calls
 │   ├── hooks/             # Custom React hooks
-│   │   ├── useLocation.ts
-│   │   ├── useWeather.ts
+│   │   ├── useLocation.ts        # Location access hook
+│   │   ├── useWeather.ts         # Weather fetching hook
+│   │   └── index.ts
+│   ├── utils/             # Utility functions
+│   │   ├── dateFormatter.ts      # Date/time formatting
+│   │   ├── weatherUtils.ts       # Weather data formatting
+│   │   └── index.ts
+│   ├── theme/             # Theme configuration
+│   │   ├── colors.ts             # Color palette & gradients
+│   │   ├── typography.ts         # Font sizes & weights
+│   │   ├── spacing.ts            # Spacing system
+│   │   ├── borderRadius.ts       # Border radius values
+│   │   └── index.ts
+│   ├── types/             # TypeScript types
+│   │   └── weather.ts            # Weather data interfaces
+│   └── constants/         # App constants
+│       ├── config.ts             # API configuration
+│       └── cities.ts             # Popular cities lister.ts
 │   │   └── index.ts
 │   ├── utils/             # Utility functions
 │   │   ├── dateFormatter.ts
@@ -121,37 +138,59 @@ curl "https://api.openweathermap.org/data/2.5/weather?lat=40.7128&lon=-74.0060&a
 - Location name and country
 - Current temperature with feels-like
 - Weather condition with dynamic icon
-- High/Low temperature display with visual indicators
+- High/Low temperature display with visual indicators and labels
+- "Feels like" temperature with thermometer icon
 - Humidity percentage
-- Wind speed (km/h) with direction
+- Wind speed (integer km/h) with cardinal direction (N, NE, E, etc.)
 - Atmospheric pressure (hPa)
 - Visibility distance (km)
 
-### Modern UI Design
-- **Glass-morphism cards** with subtle shadows
+### City Search Features
+- **Smart Dropdown**: Shows 20 popular cities worldwide
+- **Live Filtering**: Suggestions update as you type
+- **Animated Suggestions**: Smooth fade-in/fade-out (200ms)
+- **Back to Location**: Easy return to current location weather
+- **Icons**: Location marker for each city with chevron indicator
+
+### Modern UI Design with Animations
+- **Glass-morphism cards** with layered shadows and borders
+- **Entrance Animations**: Cards fade in and slide up with spring physics
+- **Staggered Loading**: Detail cards appear progressively (100-400ms delays)
+- **Pulsing Loader**: Cloud icon pulses and rotates during loading
+- **Shake on Error**: Error icon shakes to grab attention
 - **Grid layout** for weather metrics
 - **Dynamic gradients** that change with weather conditions
-- **Text shadows** for better readability
-- **Smooth animations** and transitions
+- **Text shadows** for perfect readability on gradients
+- **Smooth transitions** throughout the app
 
 ### Dynamic Themes
 The app dynamically changes its gradient background based on weather conditions:
-- Clear sky: Blue gradient
-- Cloudy: Gray gradient
-- Rainy: Dark blue gradient
-- Thunderstorm: Dark gradient
-- Snowy: Light blue gradient
-- Misty: Silver gradient
+- Clear sky: Vibrant blue gradient
+- Cloudy: Soft gray gradient  
+- Rainy: Deep blue gradient
+- Thunderstorm: Dark dramatic gradient
+- Snowy: Light icy blue gradient
+- Misty: Silver-gray gradient
+
+### Animation Details
+- **WeatherCard**: Fade + slide + scale with spring physics (600ms)
+- **DetailCards**: Staggered appearance for visual hierarchy
+- **LoadingScreen**: 1-second pulse cycle + 4-second rotation
+- **ErrorScreen**: 400ms shake sequence + 600ms fade-in
+- **SearchBar**: 200ms fade for dropdown suggestions
+- **All animations**: Use native driver for 60fps performance
 
 ## Code Quality 💎
-Modular Architecture**: Clean separation of concerns
+
+- **TypeScript**: Full type safety throughout the app with const assertions
+- **Modular Architecture**: Clean separation of concerns
 - **Custom Hooks**: Reusable logic for location and weather
 - **Commented Code**: Comprehensive JSDoc comments
-- **Consistent Styling**: Centralized theme system
-- **Error Handling**: Robust error management
-- **
-- **TypeScript**: Full type safety throughout the app
+- **Consistent Styling**: Centralized theme system with colors, typography, spacing
+- **Error Handling**: Robust error management with user-friendly messages
+- **Performance**: Native driver animations, efficient re-renders
 - **Secure Configuration**: Environment variables for sensitive data
+- **Popular Cities**: Curated list of 20 major cities for quick access
 
 ## Contributing 🤝
 

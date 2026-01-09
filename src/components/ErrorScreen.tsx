@@ -1,12 +1,12 @@
 /**
  * ErrorScreen Component
- * Displays error message with retry option
+ * Displays error message with retry option and animation
  */
 
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useRef } from "react";
+import { Animated, StyleSheet, Text, TouchableOpacity } from "react-native";
 import { borderRadius, colors, spacing, typography } from "../theme";
 
 interface ErrorScreenProps {
@@ -15,17 +15,50 @@ interface ErrorScreenProps {
 }
 
 export const ErrorScreen: React.FC<ErrorScreenProps> = ({ message, onRetry }) => {
+	const shakeAnim = useRef(new Animated.Value(0)).current;
+	const fadeAnim = useRef(new Animated.Value(0)).current;
+
+	useEffect(() => {
+		// Shake animation for icon
+		Animated.sequence([
+			Animated.timing(shakeAnim, { toValue: 10, duration: 100, useNativeDriver: true }),
+			Animated.timing(shakeAnim, { toValue: -10, duration: 100, useNativeDriver: true }),
+			Animated.timing(shakeAnim, { toValue: 10, duration: 100, useNativeDriver: true }),
+			Animated.timing(shakeAnim, { toValue: 0, duration: 100, useNativeDriver: true }),
+		]).start();
+
+		// Fade in content
+		Animated.timing(fadeAnim, {
+			toValue: 1,
+			duration: 600,
+			useNativeDriver: true,
+		}).start();
+	}, []);
+
 	return (
 		<LinearGradient colors={colors.gradients.clouds} style={styles.container}>
-			<View style={styles.content}>
-				<Ionicons name="alert-circle" size={80} color={colors.text.light} style={styles.icon} />
+			<Animated.View
+				style={[
+					styles.content,
+					{
+						opacity: fadeAnim,
+					},
+				]}
+			>
+				<Animated.View
+					style={{
+						transform: [{ translateX: shakeAnim }],
+					}}
+				>
+					<Ionicons name="alert-circle" size={80} color={colors.text.light} style={styles.icon} />
+				</Animated.View>
 				<Text style={styles.title}>Oops!</Text>
 				<Text style={styles.message}>{message}</Text>
-				<TouchableOpacity style={styles.retryButton} onPress={onRetry}>
+				<TouchableOpacity style={styles.retryButton} onPress={onRetry} activeOpacity={0.7}>
 					<Ionicons name="refresh" size={20} color={colors.text.light} />
 					<Text style={styles.retryText}>Try Again</Text>
 				</TouchableOpacity>
-			</View>
+			</Animated.View>
 		</LinearGradient>
 	);
 };

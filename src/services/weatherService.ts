@@ -43,6 +43,30 @@ export const getCurrentWeather = async (coordinates: Coordinates): Promise<Curre
 };
 
 /**
+ * Fetches current weather data by city name
+ * @param cityName - City name to search for
+ * @returns Promise with current weather data
+ */
+export const getCurrentWeatherByCity = async (cityName: string): Promise<CurrentWeather> => {
+	try {
+		const response = await apiClient.get<CurrentWeather>(ENDPOINTS.CURRENT_WEATHER, {
+			params: {
+				q: cityName,
+			},
+		});
+		return response.data;
+	} catch (error) {
+		if (axios.isAxiosError(error)) {
+			if (error.response?.status === 404) {
+				throw new Error("City not found. Please check the spelling and try again.");
+			}
+			throw new Error(`Failed to fetch weather: ${error.message}`);
+		}
+		throw error;
+	}
+};
+
+/**
  * Fetches 5-day weather forecast for given coordinates
  * @param coordinates - Latitude and longitude
  * @returns Promise with forecast data
