@@ -1,16 +1,16 @@
 # Weatherio - Beautiful Weather App 🌤️
 
-A modern, beautifully designed weather application built with React Native and Expo that provides current weather and 16-day forecast using OpenWeatherMap API.
+A modern, beautifully designed weather application built with React Native and Expo that provides real-time weather information using OpenWeatherMap API.
 
 ## Features ✨
 
 - **Real-time Location Access**: Automatically fetches your current location
 - **Current Weather**: Displays temperature, conditions, humidity, wind speed, and more
-- **5-Day Forecast**: Extended weather forecast with detailed information
 - **Beautiful UI**: Dynamic gradients that change based on weather conditions
 - **Smooth Animations**: Elegant loading states and transitions
 - **Pull to Refresh**: Easy refresh functionality
 - **Error Handling**: Graceful error messages with retry options
+- **Secure API Key**: Environment variable configuration for API key security
 
 ## Tech Stack 🛠️
 
@@ -28,7 +28,6 @@ weatherio/
 ├── src/
 │   ├── components/         # Reusable UI components
 │   │   ├── WeatherCard.tsx
-│   │   ├── ForecastCard.tsx
 │   │   ├── LoadingScreen.tsx
 │   │   ├── ErrorScreen.tsx
 │   │   └── index.ts
@@ -53,6 +52,8 @@ weatherio/
 │   │   └── weather.ts
 │   └── constants/         # App constants
 │       └── config.ts
+├── .env                  # Environment variables (not in git)
+├── .env.example          # Environment template
 ├── App.tsx               # App entry point
 ├── app.json              # Expo configuration
 └── package.json          # Dependencies
@@ -84,30 +85,35 @@ cp .env.example .env
 EXPO_PUBLIC_WEATHER_API_KEY=your_actual_api_key_here
 ```
 Get your free API key from [OpenWeatherMap](https://openweathermap.org/api)
+**Note:** New API keys may take 2-4 hours to activate after registration.
 
 4. Start the development server:
 ```bash
 npm start
 ```
 
+5
 3. Run on your platform:
 - Press `i` for iOS simulator
 - Press `a` for Android emulator
 - Scan QR code with Expo Go app for physical device
+'s **free tier** Current Weather API:
+- Endpoint: `https://api.openweathermap.org/data/2.5/weather`
+- No credit card required
+- 1,000 API calls per day limit
 
-## API Configuration 🔑
+**Environment Variables:**
+- API key is stored in `.env` file (not tracked by git)
+- Configuration is loaded from `src/constants/config.ts`
+- Use `.env.example` as a template for setting up
 
-The app uses OpenWeatherMap API with the following endpoints:
-- Current Weather: `https://api.openweathermap.org/data/2.5/weather`
-- 5-Day Forecast: `https://api.openweathermap.org/data/2.5/forecast`
-
-API Key is configured in `src/constants/config.ts`
-
-## Features in Detail 📱
-
-### Current Weather Display
-- Location name and country
-- Current temperature with feels-like
+**Test API Connection:**
+```bash
+curl "https://api.openweadynamic icon
+- Min/Max temperature
+- Humidity percentage
+- Wind speed and direction
+- Atmospheric pressureeels-like
 - Weather condition with icon
 - Min/Max temperature
 - Humidity percentage
@@ -132,6 +138,17 @@ The app dynamically changes its gradient background based on weather conditions:
 ## Code Quality 💎
 
 - **TypeScript**: Full type safety throughout the app
+- **Secure Configuration**: Environment variables for sensitive data
+
+## Contributing 🤝
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+**Remember:** Never commit your `.env` file with real API keys!
 - **Modular Architecture**: Clean separation of concerns
 - **Custom Hooks**: Reusable logic for location and weather
 - **Commented Code**: Comprehensive JSDoc comments
