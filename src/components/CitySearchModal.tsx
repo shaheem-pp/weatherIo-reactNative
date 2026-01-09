@@ -1,11 +1,11 @@
 /**
  * City Search Modal Component
- * Allows users to search and select different cities
+ * Allows users to search and select different cities with fuzzy search
  */
 
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
 	ActivityIndicator,
 	FlatList,
@@ -16,6 +16,7 @@ import {
 	TouchableOpacity,
 	View,
 } from "react-native";
+import { worldCities } from "../constants/worldCities";
 import { colors, spacing, textStyles } from "../theme";
 import { GlassCard } from "./GlassCard";
 
@@ -41,167 +42,205 @@ export const CitySearchModal: React.FC<CitySearchModalProps> = ({
 	currentCity,
 }) => {
 	const [searchQuery, setSearchQuery] = useState("");
-	const [searchResults, setSearchResults] = useState<City[]>([]);
 	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState<string | null>(null);
+	const [apiResults, setApiResults] = useState<City[]>([]);
+	const [searchingApi, setSearchingApi] = useState(false);
 
-	// Popular cities as suggestions
-	const popularCities: City[] = [
-		{ name: "New York", country: "US", state: "NY", lat: 40.7128, lon: -74.006 },
-		{ name: "London", country: "GB", lat: 51.5074, lon: -0.1278 },
-		{ name: "Tokyo", country: "JP", lat: 35.6762, lon: 139.6503 },
-		{ name: "Paris", country: "FR", lat: 48.8566, lon: 2.3522 },
-		{ name: "Dubai", country: "AE", lat: 25.2048, lon: 55.2708 },
-		{ name: "Sydney", country: "AU", lat: -33.8688, lon: 151.2093 },
-		{ name: "Singapore", country: "SG", lat: 1.3521, lon: 103.8198 },
-		{ name: "Mumbai", country: "IN", lat: 19.076, lon: 72.8777 },
-		{ name: "Los Angeles", country: "US", state: "CA", lat: 34.0522, lon: -118.2437 },
-		{ name: "Toronto", country: "CA", lat: 43.6532, lon: -79.3832 },
-		{ name: "Berlin", country: "DE", lat: 52.52, lon: 13.405 },
-		{ name: "Madrid", country: "ES", lat: 40.4168, lon: -3.7038 },
-		{ name: "Rome", country: "IT", lat: 41.9028, lon: 12.4964 },
-		{ name: "Amsterdam", country: "NL", lat: 52.3676, lon: 4.9041 },
-		{ name: "Bangkok", country: "TH", lat: 13.7563, lon: 100.5018 },
-		{ name: "Hong Kong", country: "HK", lat: 22.3193, lon: 114.1694 },
-		{ name: "Seoul", country: "KR", lat: 37.5665, lon: 126.978 },
-		{ name: "Istanbul", country: "TR", lat: 41.0082, lon: 28.9784 },
-		{ name: "São Paulo", country: "BR", lat: -23.5505, lon: -46.6333 },
-		{ name: "Mexico City", country: "MX", lat: 19.4326, lon: -99.1332 },
-	];
+	// Use our curated world cities database (already sorted by population)
+	const citiesData = useMemo(() => worldCities, []);
 
-	// Fuzzy search algorithm
-	const fuzzyMatch = (text: string, query: string): number => {
-		const textLower = text.toLowerCase();
-		const queryLower = query.toLowerCase();
+	// Popular cities for initial display (top 20 by population)
+	const popularCities: City[] = useMemo(() => worldCities.slice(0, 20), []);
 
-		// Exact match gets highest score
-		if (textLower === queryLower) return 100;
-
-		// Starts with query gets high score
-		if (textLower.startsWith(queryLower)) return 90;
-
-		// Contains query as substring
-		if (textLower.includes(queryLower)) return 80;
-
-		// Character-by-character fuzzy matching
-		let score = 0;
-		let textIndex = 0;
-
-		for (let i = 0; i < queryLower.length; i++) {
-			const char = queryLower[i];
-			const foundIndex = textLower.indexOf(char, textIndex);
-
-			if (foundIndex === -1) return 0; // Character not found
-
-			// Consecutive characters get bonus points
-			if (foundIndex === textIndex) {
-				score += 10;
-			} else {
-				score += Math.max(1, 10 - (foundIndex - textIndex));
-			}
-
-			textIndex = foundIndex + 1;
+	// Fuzzy search with ranking
+	const searchResults = useMemo(() => {
+		if (!searchQuery.trim() || searchQuery.length < 2) {
+			return popularCities;
 		}
 
-		// Penalize longer text (prefer shorter matches)
-		score -= text.length * 0.1;
+		const query = searchQuery.toLowerCase();
+		const results: Array<City & { score: number }> = [];
 
-		return Math.max(0, score);
-	};
+		// Search through all cities
+		for (const city of citiesData) {
+			const cityName = city.name.toLowerCase();
+			const country = city.country.toLowerCase();
+			const state = city.state?.toLowerCase() || "";
 
-	// Filter popular cities with fuzzy search
-	const getFilteredPopularCities = (query: string): City[] => {
-		if (!query.trim()) return popularCities;
+			let score = 0;
 
-		const citiesWithScores = popularCities.map(city => ({
-			city,
-			score: Math.max(
-				fuzzyMatch(city.name, query),
-				city.state ? fuzzyMatch(city.state, query) : 0,
-				fuzzyMatch(city.country, query)
-			),
-		}));
+			// Exact match (highest priority)
+			if (cityName === query) {
+				score = 1000;
+			}
+			// Starts with query (high priority)
+			else if (cityName.startsWith(query)) {
+				score = 900 - cityName.length;
+			}
+			// Contains query as substring (medium priority)
+			else if (cityName.includes(query)) {
+				const index = cityName.indexOf(query);
+				score = 500 - index * 10;
+			}
+			// State matches
+			else if (state && state.includes(query)) {
+				score = 300;
+			}
+			// Country matches
+			else if (country.includes(query)) {
+				score = 200;
+			}
+			// Character-by-character fuzzy match (lowest priority)
+			else {
+				let tempScore = 0;
+				let lastIndex = -1;
+				let consecutive = 0;
 
-		return citiesWithScores
-			.filter(item => item.score > 0)
+				for (const char of query) {
+					const index = cityName.indexOf(char, lastIndex + 1);
+					if (index === -1) {
+						tempScore = 0;
+						break;
+					}
+
+					if (index === lastIndex + 1) {
+						consecutive++;
+						tempScore += 10 + consecutive * 5;
+					} else {
+						consecutive = 0;
+						tempScore += Math.max(1, 10 - (index - lastIndex));
+					}
+
+					lastIndex = index;
+				}
+
+				score = tempScore;
+			}
+
+			// Only include if there's a match
+			if (score > 0) {
+				// Boost score by population rank (but don't let it dominate)
+				const populationBonus = Math.log(city.population) * 2;
+				results.push({ ...city, score: score + populationBonus });
+			}
+
+			// Stop if we have enough high-quality results
+			if (results.length >= 100 && score < 100) break;
+		}
+
+		// Sort by score and return top 50 results
+		const localResults = results
 			.sort((a, b) => b.score - a.score)
-			.map(item => item.city)
-			.slice(0, 10);
-	};
+			.slice(0, 50)
+			.map(({ score, population, ...city }) => city);
 
-	const searchCities = async (query: string) => {
-		if (!query.trim() || query.length < 2) {
-			setSearchResults([]);
+		// If no local results and we have API results, use those
+		if (localResults.length === 0 && apiResults.length > 0) {
+			return apiResults;
+		}
+
+		return localResults;
+	}, [searchQuery, citiesData, popularCities, apiResults]);
+
+	// Search OpenWeatherMap API when no local results found
+	useEffect(() => {
+		if (!searchQuery.trim() || searchQuery.length < 2) {
+			setApiResults([]);
 			return;
 		}
 
-		// First, show local fuzzy search results immediately
-		const localResults = getFilteredPopularCities(query);
-		if (localResults.length > 0) {
-			setSearchResults(localResults);
+		// Check if we have local results
+		const query = searchQuery.toLowerCase();
+		const hasLocalResults = citiesData.some(city => {
+			const cityName = city.name.toLowerCase();
+			const country = city.country.toLowerCase();
+			const state = city.state?.toLowerCase() || "";
+			return cityName.includes(query) || state.includes(query) || country.includes(query);
+		});
+
+		if (hasLocalResults) {
+			setApiResults([]);
+			return;
 		}
 
-		setLoading(true);
-		setError(null);
+		// No local results, search API
+		const searchApi = async () => {
+			setSearchingApi(true);
+			try {
+				const API_KEY = process.env.EXPO_PUBLIC_WEATHER_API_KEY || "";
+				const url = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(
+					searchQuery
+				)}&limit=10&appid=${API_KEY}`;
 
-		try {
-			// Using OpenWeatherMap Geocoding API
-			const API_KEY = process.env.EXPO_PUBLIC_WEATHER_API_KEY || "";
-			console.log("Searching for city:", query);
-			const url = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(
-				query
-			)}&limit=8&appid=${API_KEY}`;
-
-			const response = await fetch(url);
-
-			if (!response.ok) {
-				const errorText = await response.text();
-				console.error("API Error:", response.status, errorText);
-				throw new Error("Failed to search cities");
-			}
-
-			const data = await response.json();
-			console.log("Search results:", data);
-
-			// Combine API results with local fuzzy matches, remove duplicates
-			const combinedResults: City[] = [...data];
-			const apiCityNames = new Set(data.map((c: City) => c.name.toLowerCase()));
-
-			localResults.forEach(localCity => {
-				if (!apiCityNames.has(localCity.name.toLowerCase())) {
-					combinedResults.push(localCity);
+				const response = await fetch(url);
+				if (response.ok) {
+					const data = await response.json();
+					const cities: City[] = data.map((item: any) => ({
+						name: item.name,
+						country: item.country,
+						state: item.state,
+						lat: item.lat,
+						lon: item.lon,
+					}));
+					setApiResults(cities);
 				}
-			});
-
-			setSearchResults(combinedResults.slice(0, 10));
-		} catch (err) {
-			// On error, still show local fuzzy results
-			const localResults = getFilteredPopularCities(query);
-			if (localResults.length > 0) {
-				setSearchResults(localResults);
-			} else {
-				setError("Failed to search cities. Showing local results only.");
+			} catch (error) {
+				console.error("Error searching OpenWeatherMap API:", error);
+			} finally {
+				setSearchingApi(false);
 			}
-			console.error("City search error:", err);
-		} finally {
-			setLoading(false);
-		}
-	};
+		};
+
+		const timeoutId = setTimeout(searchApi, 500);
+		return () => clearTimeout(timeoutId);
+	}, [searchQuery, citiesData]);
 
 	const handleSearch = (text: string) => {
 		setSearchQuery(text);
-		searchCities(text);
 	};
 
-	const handleSelectCity = (city: City) => {
-		onSelectCity(city.lat, city.lon, city.name);
-		setSearchQuery("");
-		setSearchResults([]);
-		onClose();
+	const handleSelectCity = async (city: City) => {
+		setLoading(true);
+
+		try {
+			// Use OpenWeatherMap Geocoding API to get accurate coordinates
+			const API_KEY = process.env.EXPO_PUBLIC_WEATHER_API_KEY || "";
+			const query = city.state
+				? `${city.name},${city.state},${city.country}`
+				: `${city.name},${city.country}`;
+
+			const url = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(
+				query
+			)}&limit=1&appid=${API_KEY}`;
+
+			const response = await fetch(url);
+
+			if (response.ok) {
+				const data = await response.json();
+				if (data && data.length > 0) {
+					// Use coordinates from API
+					onSelectCity(data[0].lat, data[0].lon, city.name);
+				} else {
+					// Fallback to library coordinates
+					onSelectCity(city.lat, city.lon, city.name);
+				}
+			} else {
+				// Fallback to library coordinates
+				onSelectCity(city.lat, city.lon, city.name);
+			}
+		} catch (error) {
+			console.error("Error fetching city coordinates:", error);
+			// Fallback to library coordinates
+			onSelectCity(city.lat, city.lon, city.name);
+		} finally {
+			setLoading(false);
+			setSearchQuery("");
+			onClose();
+		}
 	};
 
 	const renderCityItem = ({ item }: { item: City }) => (
-		<TouchableOpacity onPress={() => handleSelectCity(item)}>
+		<TouchableOpacity onPress={() => handleSelectCity(item)} disabled={loading}>
 			<GlassCard style={styles.cityItem}>
 				<View style={styles.cityInfo}>
 					<View style={styles.cityNameRow}>
@@ -247,7 +286,7 @@ export const CitySearchModal: React.FC<CitySearchModalProps> = ({
 							<TouchableOpacity
 								onPress={() => {
 									setSearchQuery("");
-									setSearchResults([]);
+									setApiResults([]);
 								}}
 							>
 								<Ionicons
@@ -270,53 +309,41 @@ export const CitySearchModal: React.FC<CitySearchModalProps> = ({
 
 					{/* Results / Popular Cities */}
 					<View style={styles.resultsContainer}>
-						{loading && searchResults.length === 0 ? (
+						{loading ? (
 							<View style={styles.loadingContainer}>
 								<ActivityIndicator size="large" color={colors.white} />
-								<Text style={styles.loadingText}>Searching...</Text>
+								<Text style={styles.loadingText}>Loading city...</Text>
 							</View>
-						) : error && searchResults.length === 0 ? (
-							<View style={styles.errorContainer}>
-								<Ionicons name="alert-circle" size={48} color={colors.error} />
-								<Text style={styles.errorText}>{error}</Text>
-							</View>
-						) : searchResults.length > 0 ? (
+						) : (
 							<>
 								<View style={styles.sectionHeader}>
 									<Text style={styles.sectionTitle}>
-										{searchQuery.length > 0 ? "Search Results" : "Popular Cities"}
+										{searchQuery.length > 1
+											? searchingApi
+												? "Searching online..."
+												: `${searchResults.length} cities found`
+											: "Popular Cities"}
 									</Text>
-									{loading && (
-										<ActivityIndicator size="small" color={colors.white} style={{ opacity: 0.5 }} />
-									)}
 								</View>
-								<FlatList
-									data={searchResults}
-									renderItem={renderCityItem}
-									keyExtractor={(item, index) => `${item.name}-${item.country}-${index}`}
-									showsVerticalScrollIndicator={false}
-								/>
+								{searchingApi && searchQuery.length > 1 ? (
+									<View style={styles.loadingContainer}>
+										<ActivityIndicator size="small" color={colors.white} />
+										<Text style={styles.loadingText}>Searching online...</Text>
+									</View>
+								) : (
+									<FlatList
+										data={searchResults}
+										renderItem={renderCityItem}
+										keyExtractor={(item, index) =>
+											`${item.name}-${item.country}-${item.lat}-${index}`
+										}
+										showsVerticalScrollIndicator={false}
+										initialNumToRender={20}
+										maxToRenderPerBatch={20}
+										windowSize={10}
+									/>
+								)}
 							</>
-						) : searchQuery.length === 0 ? (
-							<>
-								<Text style={styles.sectionTitle}>Popular Cities</Text>
-								<FlatList
-									data={popularCities}
-									renderItem={renderCityItem}
-									keyExtractor={(item, index) => `${item.name}-${item.country}-${index}`}
-									showsVerticalScrollIndicator={false}
-								/>
-							</>
-						) : (
-							<View style={styles.noResultsContainer}>
-								<Ionicons
-									name="search-outline"
-									size={48}
-									color={colors.white}
-									style={{ opacity: 0.3 }}
-								/>
-								<Text style={styles.noResultsText}>No cities found. Try a different search.</Text>
-							</View>
 						)}
 					</View>
 				</View>
