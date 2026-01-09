@@ -26,148 +26,218 @@ export const WeatherCard: React.FC<WeatherCardProps> = ({ weather }) => {
 	const iconName = getWeatherIcon(weather.weather[0].icon);
 
 	return (
-		<View style={styles.card}>
+		<View>
 			{/* Location */}
 			<View style={styles.locationContainer}>
-				<Ionicons name="location" size={20} color={colors.text.light} />
+				<Ionicons name="location-sharp" size={24} color={colors.text.light} />
 				<Text style={styles.location}>
 					{weather.name}, {weather.sys.country}
 				</Text>
 			</View>
 
-			{/* Main Weather */}
-			<View style={styles.mainWeather}>
-				<Ionicons name={iconName as any} size={100} color={colors.text.light} />
-				<Text style={styles.temperature}>{formatTemperature(weather.main.temp)}</Text>
-				<Text style={styles.description}>{capitalizeWords(weather.weather[0].description)}</Text>
-				<Text style={styles.feelsLike}>
-					Feels like {formatTemperature(weather.main.feels_like)}
-				</Text>
+			{/* Main Weather Card */}
+			<View style={styles.mainCard}>
+				<View style={styles.mainWeather}>
+					<Ionicons name={iconName as any} size={120} color={colors.text.light} />
+					<View style={styles.temperatureContainer}>
+						<Text style={styles.temperature}>{formatTemperature(weather.main.temp)}</Text>
+						<View style={styles.tempDetails}>
+							<Text style={styles.description}>
+								{capitalizeWords(weather.weather[0].description)}
+							</Text>
+							<Text style={styles.feelsLike}>
+								Feels like {formatTemperature(weather.main.feels_like)}
+							</Text>
+						</View>
+					</View>
+				</View>
+
+				{/* High/Low Temperature */}
+				<View style={styles.highLowContainer}>
+					<View style={styles.highLowItem}>
+						<Ionicons name="arrow-up" size={16} color={colors.text.light} />
+						<Text style={styles.highLowText}>{formatTemperature(weather.main.temp_max)}</Text>
+					</View>
+					<View style={styles.divider} />
+					<View style={styles.highLowItem}>
+						<Ionicons name="arrow-down" size={16} color={colors.text.light} />
+						<Text style={styles.highLowText}>{formatTemperature(weather.main.temp_min)}</Text>
+					</View>
+				</View>
 			</View>
 
-			{/* Weather Details */}
-			<View style={styles.detailsContainer}>
-				<View style={styles.detailRow}>
-					<DetailItem
-						icon="thermometer-outline"
-						label="Min / Max"
-						value={`${formatTemperature(weather.main.temp_min)} / ${formatTemperature(
-							weather.main.temp_max
-						)}`}
-					/>
-					<DetailItem
-						icon="water-outline"
-						label="Humidity"
-						value={formatHumidity(weather.main.humidity)}
-					/>
-				</View>
-				<View style={styles.detailRow}>
-					<DetailItem
-						icon="speedometer-outline"
-						label="Wind"
-						value={`${formatWindSpeed(weather.wind.speed)} ${getWindDirection(weather.wind.deg)}`}
-					/>
-					<DetailItem
-						icon="analytics-outline"
-						label="Pressure"
-						value={formatPressure(weather.main.pressure)}
-					/>
-				</View>
+			{/* Weather Details Grid */}
+			<View style={styles.detailsGrid}>
+				<DetailCard
+					icon="water-outline"
+					label="Humidity"
+					value={formatHumidity(weather.main.humidity)}
+				/>
+				<DetailCard
+					icon="speedometer-outline"
+					label="Wind Speed"
+					value={formatWindSpeed(weather.wind.speed)}
+					extraInfo={getWindDirection(weather.wind.deg)}
+				/>
+				<DetailCard
+					icon="analytics-outline"
+					label="Pressure"
+					value={formatPressure(weather.main.pressure)}
+				/>
+				<DetailCard
+					icon="eye-outline"
+					label="Visibility"
+					value={`${(weather.visibility / 1000).toFixed(1)} km`}
+				/>
 			</View>
 		</View>
 	);
 };
 
 /**
- * DetailItem Component
- * Displays individual weather detail
+ * DetailCard Component
+ * Displays individual weather detail in a card
  */
-interface DetailItemProps {
+interface DetailCardProps {
 	icon: string;
 	label: string;
 	value: string;
+	extraInfo?: string;
 }
 
-const DetailItem: React.FC<DetailItemProps> = ({ icon, label, value }) => (
-	<View style={styles.detailItem}>
-		<Ionicons name={icon as any} size={24} color={colors.text.light} />
-		<View style={styles.detailText}>
-			<Text style={styles.detailLabel}>{label}</Text>
-			<Text style={styles.detailValue}>{value}</Text>
-		</View>
+const DetailCard: React.FC<DetailCardProps> = ({ icon, label, value, extraInfo }) => (
+	<View style={styles.detailCard}>
+		<Ionicons name={icon as any} size={28} color={colors.text.light} style={styles.detailIcon} />
+		<Text style={styles.detailLabel}>{label}</Text>
+		<Text style={styles.detailValue}>{value}</Text>
+		{extraInfo && <Text style={styles.detailExtra}>{extraInfo}</Text>}
 	</View>
 );
 
 const styles = StyleSheet.create({
-	card: {
-		backgroundColor: "rgba(255, 255, 255, 0.2)",
-		borderRadius: borderRadius.xl,
-		padding: spacing.xl,
-		marginBottom: spacing.lg,
-	},
 	locationContainer: {
 		flexDirection: "row",
 		alignItems: "center",
 		justifyContent: "center",
-		marginBottom: spacing.lg,
+		marginBottom: spacing.xl,
 		gap: spacing.sm,
 	},
 	location: {
-		fontSize: typography.sizes.xl,
-		fontWeight: typography.weights.semibold,
+		fontSize: typography.sizes["2xl"],
+		fontWeight: typography.weights.bold,
 		color: colors.text.light,
+		textShadowColor: "rgba(0, 0, 0, 0.3)",
+		textShadowOffset: { width: 0, height: 2 },
+		textShadowRadius: 4,
+	},
+	mainCard: {
+		backgroundColor: "rgba(255, 255, 255, 0.25)",
+		borderRadius: borderRadius.xl,
+		padding: spacing.xl,
+		marginBottom: spacing.lg,
+		shadowColor: "#000",
+		shadowOffset: { width: 0, height: 4 },
+		shadowOpacity: 0.15,
+		shadowRadius: 12,
+		elevation: 8,
 	},
 	mainWeather: {
 		alignItems: "center",
-		marginBottom: spacing.xl,
+		paddingBottom: spacing.lg,
+	},
+	temperatureContainer: {
+		alignItems: "center",
+		marginTop: spacing.md,
 	},
 	temperature: {
-		fontSize: typography.sizes["6xl"],
+		fontSize: 72,
 		fontWeight: typography.weights.bold,
 		color: colors.text.light,
-		marginTop: spacing.md,
+		letterSpacing: -2,
+		textShadowColor: "rgba(0, 0, 0, 0.2)",
+		textShadowOffset: { width: 0, height: 2 },
+		textShadowRadius: 8,
+	},
+	tempDetails: {
+		alignItems: "center",
+		marginTop: spacing.sm,
 	},
 	description: {
 		fontSize: typography.sizes.xl,
 		color: colors.text.light,
-		marginTop: spacing.sm,
-		fontWeight: typography.weights.medium,
+		fontWeight: typography.weights.semibold,
+		textTransform: "capitalize",
 	},
 	feelsLike: {
 		fontSize: typography.sizes.base,
 		color: colors.text.light,
-		marginTop: spacing.sm,
-		opacity: 0.8,
+		marginTop: spacing.xs,
+		opacity: 0.85,
 	},
-	detailsContainer: {
-		gap: spacing.md,
-	},
-	detailRow: {
-		flexDirection: "row",
-		justifyContent: "space-between",
-		gap: spacing.md,
-	},
-	detailItem: {
-		flex: 1,
+	highLowContainer: {
 		flexDirection: "row",
 		alignItems: "center",
-		backgroundColor: "rgba(255, 255, 255, 0.15)",
-		padding: spacing.md,
-		borderRadius: borderRadius.md,
-		gap: spacing.sm,
+		justifyContent: "center",
+		backgroundColor: "rgba(255, 255, 255, 0.2)",
+		borderRadius: borderRadius.lg,
+		paddingVertical: spacing.md,
+		paddingHorizontal: spacing.lg,
+		marginTop: spacing.md,
+		gap: spacing.lg,
 	},
-	detailText: {
+	highLowItem: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: spacing.xs,
+	},
+	highLowText: {
+		fontSize: typography.sizes.lg,
+		fontWeight: typography.weights.bold,
+		color: colors.text.light,
+	},
+	divider: {
+		width: 1,
+		height: 20,
+		backgroundColor: "rgba(255, 255, 255, 0.4)",
+	},
+	detailsGrid: {
+		flexDirection: "row",
+		flexWrap: "wrap",
+		gap: spacing.md,
+	},
+	detailCard: {
 		flex: 1,
+		minWidth: "47%",
+		backgroundColor: "rgba(255, 255, 255, 0.25)",
+		borderRadius: borderRadius.lg,
+		padding: spacing.lg,
+		alignItems: "center",
+		shadowColor: "#000",
+		shadowOffset: { width: 0, height: 2 },
+		shadowOpacity: 0.1,
+		shadowRadius: 8,
+		elevation: 4,
+	},
+	detailIcon: {
+		marginBottom: spacing.sm,
 	},
 	detailLabel: {
 		fontSize: typography.sizes.sm,
 		color: colors.text.light,
-		opacity: 0.8,
-		marginBottom: 2,
+		opacity: 0.85,
+		marginBottom: spacing.xs,
+		fontWeight: typography.weights.medium,
 	},
 	detailValue: {
-		fontSize: typography.sizes.base,
-		fontWeight: typography.weights.semibold,
+		fontSize: typography.sizes.xl,
+		fontWeight: typography.weights.bold,
 		color: colors.text.light,
+	},
+	detailExtra: {
+		fontSize: typography.sizes.sm,
+		color: colors.text.light,
+		opacity: 0.9,
+		marginTop: spacing.xs,
+		fontWeight: typography.weights.semibold,
 	},
 });

@@ -97,7 +97,10 @@ npm start
 - Press `i` for iOS simulator
 - Press `a` for Android emulator
 - Scan QR code with Expo Go app for physical device
-'s **free tier** Current Weather API:
+
+## API Configuration 🔑
+
+The app uses OpenWeatherMap's **free tier** Current Weather API:
 - Endpoint: `https://api.openweathermap.org/data/2.5/weather`
 - No credit card required
 - 1,000 API calls per day limit
@@ -109,22 +112,27 @@ npm start
 
 **Test API Connection:**
 ```bash
-curl "https://api.openweadynamic icon
-- Min/Max temperature
-- Humidity percentage
-- Wind speed and direction
-- Atmospheric pressureeels-like
-- Weather condition with icon
-- Min/Max temperature
-- Humidity percentage
-- Wind speed and direction
-- Atmospheric pressure
+curl "https://api.openweathermap.org/data/2.5/weather?lat=40.7128&lon=-74.0060&appid=YOUR_API_KEY&units=metric&lang=en"
+```
 
-### 5-Day Forecast
-- Daily high and low temperatures
-- Weather conditions
-- Precipitation probability
-- Scrollable horizontal list
+## Features in Detail 📱
+
+### Current Weather Display
+- Location name and country
+- Current temperature with feels-like
+- Weather condition with dynamic icon
+- High/Low temperature display with visual indicators
+- Humidity percentage
+- Wind speed (km/h) with direction
+- Atmospheric pressure (hPa)
+- Visibility distance (km)
+
+### Modern UI Design
+- **Glass-morphism cards** with subtle shadows
+- **Grid layout** for weather metrics
+- **Dynamic gradients** that change with weather conditions
+- **Text shadows** for better readability
+- **Smooth animations** and transitions
 
 ### Dynamic Themes
 The app dynamically changes its gradient background based on weather conditions:
@@ -136,7 +144,12 @@ The app dynamically changes its gradient background based on weather conditions:
 - Misty: Silver gradient
 
 ## Code Quality 💎
-
+Modular Architecture**: Clean separation of concerns
+- **Custom Hooks**: Reusable logic for location and weather
+- **Commented Code**: Comprehensive JSDoc comments
+- **Consistent Styling**: Centralized theme system
+- **Error Handling**: Robust error management
+- **
 - **TypeScript**: Full type safety throughout the app
 - **Secure Configuration**: Environment variables for sensitive data
 

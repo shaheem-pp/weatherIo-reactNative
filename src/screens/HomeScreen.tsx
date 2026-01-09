@@ -69,9 +69,9 @@ export const HomeScreen: React.FC = () => {
 	const gradientColors = colors.gradients[getWeatherGradient(currentWeather.weather[0].main)];
 
 	return (
-		<SafeAreaView style={styles.safeArea}>
+		<LinearGradient colors={gradientColors} style={styles.container}>
 			<StatusBar barStyle="light-content" />
-			<LinearGradient colors={gradientColors} style={styles.container}>
+			<SafeAreaView style={styles.safeArea}>
 				<ScrollView
 					contentContainerStyle={styles.scrollContent}
 					showsVerticalScrollIndicator={false}
@@ -91,28 +91,34 @@ export const HomeScreen: React.FC = () => {
 					{/* Current Weather Card */}
 					<WeatherCard weather={currentWeather} />
 				</ScrollView>
-			</LinearGradient>
-		</SafeAreaView>
+			</SafeAreaView>
+		</LinearGradient>
 	);
 };
 
 const styles = StyleSheet.create({
-	safeArea: {
+	container: {
 		flex: 1,
 	},
-	container: {
+	safeArea: {
 		flex: 1,
 	},
 	scrollContent: {
 		padding: spacing.lg,
+		paddingTop: spacing.md,
 	},
 	header: {
-		marginBottom: spacing.lg,
+		marginBottom: spacing.xl,
+		marginTop: spacing.sm,
 	},
 	dateText: {
 		fontSize: typography.sizes.lg,
-		fontWeight: typography.weights.medium,
+		fontWeight: typography.weights.semibold,
 		color: colors.text.light,
 		textAlign: "center",
+		opacity: 0.95,
+		textShadowColor: "rgba(0, 0, 0, 0.2)",
+		textShadowOffset: { width: 0, height: 1 },
+		textShadowRadius: 3,
 	},
 });
