@@ -1,202 +1,141 @@
-# Weatherio - Beautiful Weather App 🌤️
+# Weatherio
 
-A modern, beautifully designed weather application built with React Native and Expo that provides real-time weather information using OpenWeatherMap API.
+Weatherio is a React Native (Expo) weather app that shows current conditions, an 8‑hour forecast, and a 5‑day forecast using the OpenWeatherMap API. It supports GPS weather by default and a city search modal for browsing weather anywhere.
 
-## Features ✨
+- Platform: Expo (iOS / Android / Web)
+- Language: TypeScript
+- API: OpenWeatherMap (Current Weather + 5‑day / 3‑hour forecast + Geocoding)
 
-- **Real-time Location Access**: Automatically fetches your current location
-- **City Search**: Search any city with smart dropdown suggestions of 20 popular cities worldwide
-- **Current Weather**: Displays temperature, conditions, humidity, wind speed, pressure, and visibility
-- **Beautiful UI/UX**: 
-  - Dynamic gradients that change based on weather conditions
-  - Glass-morphism cards with depth and shadows
-  - Smooth entrance animations with spring physics
-  - Staggered card animations for professional feel
-- **Smooth Animations**: 
-  - Pulsing and rotating loading screen
-  - Fade-in effects on content
-  - Shake animation on errors
-  - Animated dropdown suggestions
-- **Pull to Refresh**: Easy refresh functionality for both location and searched cities
-- **Error Handling**: Graceful error messages with animated retry options
-- **Secure API Key**: Environment variable configuration for API key security
-- **Integer Wind Speed**: Clean whole number display in km/h (e.g., "19 km/h" not "18.7 km/h")
+## Sections
 
-## Tech Stack 🛠️
+- Overview
+- Quickstart
+- Configuration
+- City search
+- Architecture
+- Docs
 
-- **React Native** with Expo
-- **TypeScript** for type safety
-- **Expo Location** for geolocation
-- **Axios** for API calls       # Main weather display with animations
-│   │   ├── SearchBar.tsx         # Search with dropdown suggestions
-│   │   ├── LoadingScreen.tsx     # Animated loading state
-│   │   ├── ErrorScreen.tsx       # Animated error handling
-│   │   └── index.ts
-│   ├── screens/           # Screen components
-│   │   └── HomeScreen.tsx        # Main app screen
-│   ├── services/          # API services
-│   │   └── weatherService.ts     # OpenWeatherMap API calls
-│   ├── hooks/             # Custom React hooks
-│   │   ├── useLocation.ts        # Location access hook
-│   │   ├── useWeather.ts         # Weather fetching hook
-│   │   └── index.ts
-│   ├── utils/             # Utility functions
-│   │   ├── dateFormatter.ts      # Date/time formatting
-│   │   ├── weatherUtils.ts       # Weather data formatting
-│   │   └── index.ts
-│   ├── theme/             # Theme configuration
-│   │   ├── colors.ts             # Color palette & gradients
-│   │   ├── typography.ts         # Font sizes & weights
-│   │   ├── spacing.ts            # Spacing system
-│   │   ├── borderRadius.ts       # Border radius values
-│   │   └── index.ts
-│   ├── types/             # TypeScript types
-│   │   └── weather.ts            # Weather data interfaces
-│   └── constants/         # App constants
-│       ├── config.ts             # API configuration
-│       └── cities.ts             # Popular cities lister.ts
-│   │   └── index.ts
-│   ├── utils/             # Utility functions
-│   │   ├── dateFormatter.ts
-│   │   ├── weatherUtils.ts
-│   │   └── index.ts
-│   ├── theme/             # Theme configuration
-│   │   ├── colors.ts
-│   │   ├── typography.ts
-│   │   ├── spacing.ts
-│   │   └── index.ts
-│   ├── types/             # TypeScript type definitions
-│   │   └── weather.ts
-│   └── constants/         # App constants
-│       └── config.ts
-├── .env                  # Environment variables (not in git)
-├── .env.example          # Environment template
-├── App.tsx               # App entry point
-├── app.json              # Expo configuration
-└── package.json          # Dependencies
-```
+<details open>
+<summary><strong>Overview</strong></summary>
 
-## Getting Started 🚀
+### Features
+
+- Current weather: temperature, feels like, min/max, condition and icon
+- Hourly forecast: next 8 slots (3‑hourly data)
+- Daily forecast: grouped to 5 days, with precipitation probability when relevant
+- Details grid: humidity, pressure, wind (rounded km/h + direction), visibility, cloudiness
+- Dynamic UI: weather-based gradients and glassmorphism cards
+- Pull to refresh
+- Loading + error states with retry
+
+</details>
+
+<details>
+<summary><strong>Quickstart</strong></summary>
 
 ### Prerequisites
 
-- Node.js (v14 or later)
-- npm or yarn
-- Expo CLI
-- iOS Simulator (for iOS) or Android Emulator (for Android)
+- Node.js (recommended: 18+)
+- npm
+- Expo Go app (device) or iOS Simulator / Android Emulator
 
-### Installation
+### Setup
 
-1. Install dependencies:
+1) Install dependencies:
+
 ```bash
 npm install
 ```
 
-2. Create a `.env` file in the root directory:
+2) Configure env vars:
+
 ```bash
 cp .env.example .env
 ```
 
-3. Add your OpenWeatherMap API key to `.env`:
-```
-EXPO_PUBLIC_WEATHER_API_KEY=your_actual_api_key_here
-```
-Get your free API key from [OpenWeatherMap](https://openweathermap.org/api)
-**Note:** New API keys may take 2-4 hours to activate after registration.
+Set your key in `.env`:
 
-4. Start the development server:
+```
+EXPO_PUBLIC_WEATHER_API_KEY=your_openweathermap_key
+```
+
+3) Run:
+
 ```bash
 npm start
 ```
 
-5
-3. Run on your platform:
-- Press `i` for iOS simulator
-- Press `a` for Android emulator
-- Scan QR code with Expo Go app for physical device
+### Useful scripts
 
-## API Configuration 🔑
+- `npm run ios`
+- `npm run android`
+- `npm run web`
 
-The app uses OpenWeatherMap's **free tier** Current Weather API:
-- Endpoint: `https://api.openweathermap.org/data/2.5/weather`
-- No credit card required
-- 1,000 API calls per day limit
+</details>
 
-**Environment Variables:**
-- API key is stored in `.env` file (not tracked by git)
-- Configuration is loaded from `src/constants/config.ts`
-- Use `.env.example` as a template for setting up
+<details>
+<summary><strong>Configuration</strong></summary>
 
-**Test API Connection:**
-```bash
-curl "https://api.openweathermap.org/data/2.5/weather?lat=40.7128&lon=-74.0060&appid=YOUR_API_KEY&units=metric&lang=en"
+### Environment variables
+
+- `EXPO_PUBLIC_WEATHER_API_KEY`: required (used for weather + geocoding)
+
+### API configuration
+
+See `src/constants/config.ts` for:
+
+- base URLs and endpoints
+- `units` (metric/imperial)
+- `lang`
+- forecast item count
+
+</details>
+
+<details>
+<summary><strong>City search</strong></summary>
+
+- Open the modal from the top-right search icon on the home screen.
+- Type at least 2 characters to search.
+- Results come from a bundled world cities dataset (ranked), with an OpenWeatherMap geocoding fallback when no local matches are found.
+- Tap the left icon (navigation) to return to your GPS location after selecting a city.
+
+</details>
+
+<details>
+<summary><strong>Architecture</strong></summary>
+
+### High-level layout
+
+```
+src/
+  components/   UI building blocks (cards, forecasts, modal)
+  screens/      Home screen composition
+  hooks/        useLocation + useWeather
+  services/     OpenWeatherMap API client
+  theme/        colors/typography/spacing tokens
+  utils/        formatting + forecast grouping
+  types/        API response types
 ```
 
-## Features in Detail 📱
+### Data flow
 
-### Current Weather Display
-- Location name and country
-- Current temperature with feels-like
-- Weather condition with dynamic icon
-- High/Low temperature display with visual indicators and labels
-- "Feels like" temperature with thermometer icon
-- Humidity percentage
-- Wind speed (integer km/h) with cardinal direction (N, NE, E, etc.)
-- Atmospheric pressure (hPa)
-- Visibility distance (km)
+- `useLocation` gets GPS coordinates.
+- `useWeather` fetches current weather + forecast in parallel via `src/services/weatherService.ts`.
+- Forecast is transformed via `getHourlyForecast` and `groupForecastByDay` in `src/utils/weatherUtils.ts`.
 
-### City Search Features
-- **Native Modal Picker**: Full-screen bottom sheet dropdown (feels native on iOS & Android)
-- **150+ Cities**: Comprehensive list from OpenWeatherMap CSV
-- **Real-Time Search**: Instant filtering as you type
-- **Smart Filtering**: Searches both city names and countries
-- **Clear Button**: Easy return to current location weather
-- **Native Animations**: Smooth slide-up modal with backdrop
-- **Empty States**: Beautiful feedback when no cities match
-- **Results Counter**: Shows number of matching cities
-- **Touch Optimized**: Large, accessible touch targets
+</details>
 
-### Modern UI Design with Animations
-- **Glass-morphism cards** with layered shadows and borders
-- **Entrance Animations**: Cards fade in and slide up with spring physics
-- **Staggered Loading**: Detail cards appear progressively (100-400ms delays)
-- **Pulsing Loader**: Cloud icon pulses and rotates during loading
-- **Shake on Error**: Error icon shakes to grab attention
-- **Grid layout** for weather metrics
-- **Dynamic gradients** that change with weather conditions
-- **Text shadows** for perfect readability on gradients
-- **Smooth transitions** throughout the app
+<details>
+<summary><strong>Docs</strong></summary>
 
-### Dynamic Themes
-The app dynamically changes its gradient background based on weather conditions:
-- Clear sky: Vibrant blue gradient
-- Cloudy: Soft gray gradient  
-- Rainy: Deep blue gradient
-- Thunderstorm: Dark dramatic gradient
-- Snowy: Light icy blue gradient
-- Misty: Silver-gray gradient
+- `QUICKSTART.md` (setup and troubleshooting)
+- `CITY_SEARCH_GUIDE.md` (city search behavior and UX)
+- `COMPONENT_DOCS.md` (component APIs)
+- `COMPONENT_TREE.md` (component tree and data flow diagrams)
+- `DESIGN_SUMMARY.md` (design decisions and system)
+- `PROJECT_SUMMARY.md` (project overview)
 
-### Animation Details
-- **WeatherCard**: Fade + slide + scale with spring physics (600ms)
-- **DetailCards**: Staggered appearance for visual hierarchy
-- **LoadingScreen**: 1-second pulse cycle + 4-second rotation
-- **ErrorScreen**: 400ms shake sequence + 600ms fade-in
-- **SearchBar**: 200ms fade for dropdown suggestions
-- **All animations**: Use native driver for 60fps performance
-
-## Code Quality 💎
-
-- **TypeScript**: Full type safety throughout the app with const assertions
-- **Modular Architecture**: Clean separation of concerns
-- **Custom Hooks**: Reusable logic for location and weather
-- **Commented Code**: Comprehensive JSDoc comments
-- **Consistent Styling**: Centralized theme system with colors, typography, spacing
-- **Error Handling**: Robust error management with user-friendly messages
-- **Performance**: Native driver animations, efficient re-renders
-- **Secure Configuration**: Environment variables for sensitive data
-- **Popular Cities**: Curated list of 20 major cities for quick access
-
-## Contributing 🤝
+</details>
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/amazing-feature`)

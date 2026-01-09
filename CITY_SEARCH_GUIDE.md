@@ -15,17 +15,7 @@ The weather app now includes a city search feature that allows users to view wea
 3. **Select a city**: Tap any city from the results to view its weather
 
 ### Popular Cities
-If you haven't typed anything in the search bar, you'll see a list of **10 popular cities**:
-- New York, USA
-- London, UK
-- Tokyo, Japan
-- Paris, France
-- Dubai, UAE
-- Sydney, Australia
-- Singapore
-- Mumbai, India
-- Los Angeles, USA
-- Toronto, Canada
+If you haven't typed anything in the search bar (or your query is fewer than 2 characters), you'll see a list of **20 popular cities** (top cities by population from the bundled dataset).
 
 ### Returning to Your Current Location
 Tap the **navigation icon** (🧭) in the top-left corner to return to your GPS location's weather.
@@ -61,10 +51,15 @@ The 5-day forecast now has an enhanced layout:
 ## Technical Details
 
 ### API Integration
-The city search uses OpenWeatherMap's Geocoding API:
-- Endpoint: `https://api.openweathermap.org/geo/1.0/direct`
+City search is primarily local (fast, offline-friendly) and uses OpenWeatherMap as a fallback:
+
+1) Local search: bundled world cities dataset (`src/constants/worldCities.ts`)
+2) Fallback: OpenWeatherMap Geocoding API when no local matches are found
+
+Geocoding endpoint:
+- `https://api.openweathermap.org/geo/1.0/direct`
 - Returns city coordinates (latitude/longitude)
-- Same API key as weather data
+- Uses the same API key as weather data
 
 ### State Management
 - Selected city is stored in local state
