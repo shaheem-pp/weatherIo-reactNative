@@ -8,7 +8,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import {
 	RefreshControl,
-	SafeAreaView,
 	ScrollView,
 	StatusBar,
 	StyleSheet,
@@ -16,12 +15,13 @@ import {
 	TouchableOpacity,
 	View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { ErrorScreen, LoadingScreen, SearchBar, WeatherCard } from "../components";
 import { useLocation, useWeather } from "../hooks";
 import { getCurrentWeatherByCity } from "../services/weatherService";
 import { borderRadius, colors, spacing, typography } from "../theme";
 import type { CurrentWeather } from "../types/weather";
-import { formatDate, getWeatherGradient } from "../utils";
+import { capitalizeWords, formatDate, getWeatherGradient } from "../utils";
 
 export const HomeScreen: React.FC = () => {
 	const [searchedWeather, setSearchedWeather] = useState<CurrentWeather | null>(null);
@@ -116,11 +116,14 @@ export const HomeScreen: React.FC = () => {
 
 	// Get gradient based on weather condition
 	const gradientColors = colors.gradients[getWeatherGradient(currentWeather.weather[0].main)];
+	const conditionLabel = capitalizeWords(currentWeather.weather[0].main);
 
 	return (
 		<LinearGradient colors={gradientColors} style={styles.container}>
 			<StatusBar barStyle="light-content" />
 			<SafeAreaView style={styles.safeArea}>
+				<View pointerEvents="none" style={styles.glowTop} />
+				<View pointerEvents="none" style={styles.glowBottom} />
 				<ScrollView
 					contentContainerStyle={styles.scrollContent}
 					showsVerticalScrollIndicator={false}
@@ -132,27 +135,35 @@ export const HomeScreen: React.FC = () => {
 						/>
 					}
 				>
+					<View style={styles.header}>
+						<View>
+							<Text style={styles.title}>Weatherio</Text>
+							<Text style={styles.subtitle}>{formatDate(currentWeather.dt)}</Text>
+						</View>
+						<View style={styles.headerBadge}>
+							<Ionicons name="sparkles" size={14} color={colors.text.light} />
+							<Text style={styles.headerBadgeText}>{conditionLabel}</Text>
+						</View>
+					</View>
+
 					{/* Search Bar */}
 					<SearchBar onSearch={handleCitySearch} placeholder="Search for a city..." />
+
+					{/* Search Result Badge */}
+					{isShowingSearchResult && (
+						<View style={styles.searchBadge}>
+							<Ionicons name="search" size={14} color={colors.text.light} />
+							<Text style={styles.searchBadgeText}>Search Result</Text>
+						</View>
+					)}
 
 					{/* Show current location button when displaying search result */}
 					{isShowingSearchResult && (
 						<TouchableOpacity style={styles.locationButton} onPress={handleClearSearch}>
-							<Ionicons name="location" size={18} color={colors.text.light} />
+							<Ionicons name="locate" size={18} color={colors.text.light} />
 							<Text style={styles.locationButtonText}>Back to Current Location</Text>
 						</TouchableOpacity>
 					)}
-
-					{/* Header */}
-					<View style={styles.header}>
-						<Text style={styles.dateText}>{formatDate(currentWeather.dt)}</Text>
-						{isShowingSearchResult && (
-							<View style={styles.searchBadge}>
-								<Ionicons name="search" size={14} color={colors.text.light} />
-								<Text style={styles.searchBadgeText}>Search Result</Text>
-							</View>
-						)}
-					</View>
 
 					{/* Current Weather Card */}
 					<WeatherCard weather={currentWeather} />
@@ -172,57 +183,95 @@ const styles = StyleSheet.create({
 	scrollContent: {
 		padding: spacing.lg,
 		paddingTop: spacing.md,
-	},
-	locationButton: {
-		flexDirection: "row",
-		alignItems: "center",
-		justifyContent: "center",
-		backgroundColor: "rgba(255, 255, 255, 0.3)",
-		borderRadius: borderRadius.lg,
-		paddingVertical: spacing.sm,
-		paddingHorizontal: spacing.lg,
-		marginBottom: spacing.lg,
-		gap: spacing.sm,
-		shadowColor: "#000",
-		shadowOffset: { width: 0, height: 2 },
-		shadowOpacity: 0.1,
-		shadowRadius: 4,
-		elevation: 3,
-	},
-	locationButtonText: {
-		fontSize: typography.sizes.base,
-		fontWeight: typography.weights.semibold,
-		color: colors.text.light,
+		paddingBottom: spacing["2xl"],
 	},
 	header: {
-		marginBottom: spacing.xl,
-		marginTop: spacing.sm,
+		flexDirection: "row",
 		alignItems: "center",
+		justifyContent: "space-between",
+		marginBottom: spacing.lg,
 	},
-	dateText: {
-		fontSize: typography.sizes.lg,
-		fontWeight: typography.weights.semibold,
+	title: {
+		fontSize: typography.sizes["3xl"],
+		fontFamily: typography.fonts.display,
 		color: colors.text.light,
-		textAlign: "center",
-		opacity: 0.95,
-		textShadowColor: "rgba(0, 0, 0, 0.2)",
-		textShadowOffset: { width: 0, height: 1 },
-		textShadowRadius: 3,
+	},
+	subtitle: {
+		fontSize: typography.sizes.sm,
+		fontFamily: typography.fonts.body,
+		color: colors.text.muted,
+		marginTop: spacing.xs,
+	},
+	headerBadge: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: spacing.xs,
+		backgroundColor: colors.glassStrong,
+		paddingHorizontal: spacing.md,
+		paddingVertical: spacing.xs,
+		borderRadius: borderRadius.full,
+		borderWidth: 1,
+		borderColor: colors.glassBorder,
+	},
+	headerBadgeText: {
+		fontSize: typography.sizes.sm,
+		fontFamily: typography.fonts.label,
+		color: colors.text.light,
 	},
 	searchBadge: {
 		flexDirection: "row",
 		alignItems: "center",
 		gap: spacing.xs,
-		backgroundColor: "rgba(255, 255, 255, 0.25)",
+		alignSelf: "flex-start",
+		marginBottom: spacing.sm,
+		backgroundColor: "rgba(15, 26, 38, 0.35)",
 		paddingHorizontal: spacing.md,
 		paddingVertical: spacing.xs,
 		borderRadius: borderRadius.full,
-		marginTop: spacing.sm,
 	},
 	searchBadgeText: {
+		fontSize: typography.sizes.xs,
+		fontFamily: typography.fonts.label,
+		color: colors.text.muted,
+		textTransform: "uppercase",
+		letterSpacing: 1,
+	},
+	locationButton: {
+		flexDirection: "row",
+		alignItems: "center",
+		justifyContent: "center",
+		backgroundColor: colors.surface,
+		borderRadius: borderRadius.full,
+		paddingVertical: spacing.sm,
+		paddingHorizontal: spacing.lg,
+		marginBottom: spacing.lg,
+		gap: spacing.sm,
+		borderWidth: 1,
+		borderColor: colors.glassBorder,
+	},
+	locationButtonText: {
 		fontSize: typography.sizes.sm,
-		fontWeight: typography.weights.medium,
+		fontFamily: typography.fonts.label,
 		color: colors.text.light,
-		opacity: 0.95,
+		textTransform: "uppercase",
+		letterSpacing: 0.8,
+	},
+	glowTop: {
+		position: "absolute",
+		right: -120,
+		top: -80,
+		width: 260,
+		height: 260,
+		borderRadius: 130,
+		backgroundColor: colors.glow,
+	},
+	glowBottom: {
+		position: "absolute",
+		left: -140,
+		bottom: -120,
+		width: 280,
+		height: 280,
+		borderRadius: 140,
+		backgroundColor: colors.glowStrong,
 	},
 });

@@ -1,6 +1,6 @@
 /**
  * WeatherCard Component
- * Displays current weather information with beautiful design and animations
+ * Displays current weather information with polished layout and motion
  */
 
 import { Ionicons } from "@expo/vector-icons";
@@ -13,6 +13,7 @@ import {
 	formatHumidity,
 	formatPressure,
 	formatTemperature,
+	formatTime,
 	formatWindSpeed,
 	getWeatherIcon,
 	getWindDirection,
@@ -27,25 +28,29 @@ export const WeatherCard: React.FC<WeatherCardProps> = ({ weather }) => {
 
 	// Animation values
 	const fadeAnim = useRef(new Animated.Value(0)).current;
-	const slideAnim = useRef(new Animated.Value(30)).current;
-	const scaleAnim = useRef(new Animated.Value(0.9)).current;
+	const slideAnim = useRef(new Animated.Value(20)).current;
+	const scaleAnim = useRef(new Animated.Value(0.98)).current;
 
 	useEffect(() => {
+		fadeAnim.setValue(0);
+		slideAnim.setValue(20);
+		scaleAnim.setValue(0.98);
+
 		Animated.parallel([
 			Animated.timing(fadeAnim, {
 				toValue: 1,
-				duration: 600,
+				duration: 500,
 				useNativeDriver: true,
 			}),
 			Animated.spring(slideAnim, {
 				toValue: 0,
-				tension: 50,
+				tension: 60,
 				friction: 7,
 				useNativeDriver: true,
 			}),
 			Animated.spring(scaleAnim, {
 				toValue: 1,
-				tension: 50,
+				tension: 60,
 				friction: 7,
 				useNativeDriver: true,
 			}),
@@ -54,81 +59,106 @@ export const WeatherCard: React.FC<WeatherCardProps> = ({ weather }) => {
 
 	return (
 		<Animated.View
-			style={{
-				opacity: fadeAnim,
-				transform: [{ translateY: slideAnim }, { scale: scaleAnim }],
-			}}
+			style={[
+				styles.card,
+				{
+					opacity: fadeAnim,
+					transform: [{ translateY: slideAnim }, { scale: scaleAnim }],
+				},
+			]}
 		>
-			{/* Location */}
-			<View style={styles.locationContainer}>
-				<Ionicons name="location-sharp" size={28} color={colors.text.light} />
-				<Text style={styles.location}>
-					{weather.name}, {weather.sys.country}
-				</Text>
+			<View style={styles.locationRow}>
+				<View style={styles.locationBadge}>
+					<Ionicons name="location-sharp" size={18} color={colors.text.light} />
+					<Text style={styles.locationText}>
+						{weather.name}, {weather.sys.country}
+					</Text>
+				</View>
+				<View style={styles.timeBadge}>
+					<Ionicons name="time-outline" size={14} color={colors.text.muted} />
+					<Text style={styles.timeText}>{formatTime(weather.dt)}</Text>
+				</View>
 			</View>
 
-			{/* Main Weather Card */}
-			<View style={styles.mainCard}>
-				<View style={styles.mainWeather}>
-					<Ionicons name={iconName as any} size={140} color={colors.text.light} />
-					<View style={styles.temperatureContainer}>
-						<Text style={styles.temperature}>{formatTemperature(weather.main.temp)}</Text>
-						<View style={styles.tempDetails}>
-							<Text style={styles.description}>
-								{capitalizeWords(weather.weather[0].description)}
+			<View style={styles.heroRow}>
+				<View style={styles.tempColumn}>
+					<Text style={styles.temperature}>{formatTemperature(weather.main.temp)}</Text>
+					<Text style={styles.condition}>
+						{capitalizeWords(weather.weather[0].description)}
+					</Text>
+					<View style={styles.feelsLikeContainer}>
+						<Ionicons name="thermometer-outline" size={14} color={colors.text.muted} />
+						<Text style={styles.feelsLike}>
+							Feels like {formatTemperature(weather.main.feels_like)}
+						</Text>
+					</View>
+				</View>
+
+				<View style={styles.iconColumn}>
+					<View style={styles.iconBubble}>
+						<Ionicons name={iconName as any} size={96} color={colors.text.light} />
+					</View>
+					<View style={styles.highLowPill}>
+						<View style={styles.highLowItem}>
+							<Ionicons name="arrow-up" size={14} color={colors.text.light} />
+							<Text style={styles.highLowValue}>
+								{formatTemperature(weather.main.temp_max)}
 							</Text>
-							<View style={styles.feelsLikeContainer}>
-								<Ionicons name="thermometer-outline" size={16} color={colors.text.light} />
-								<Text style={styles.feelsLike}>
-									Feels like {formatTemperature(weather.main.feels_like)}
-								</Text>
-							</View>
+						</View>
+						<View style={styles.highLowDivider} />
+						<View style={styles.highLowItem}>
+							<Ionicons name="arrow-down" size={14} color={colors.text.light} />
+							<Text style={styles.highLowValue}>
+								{formatTemperature(weather.main.temp_min)}
+							</Text>
 						</View>
 					</View>
 				</View>
-
-				{/* High/Low Temperature */}
-				<View style={styles.highLowContainer}>
-					<View style={styles.highLowItem}>
-						<Ionicons name="arrow-up" size={18} color={colors.text.light} />
-						<Text style={styles.highLowText}>{formatTemperature(weather.main.temp_max)}</Text>
-						<Text style={styles.highLowLabel}>High</Text>
-					</View>
-					<View style={styles.divider} />
-					<View style={styles.highLowItem}>
-						<Ionicons name="arrow-down" size={18} color={colors.text.light} />
-						<Text style={styles.highLowText}>{formatTemperature(weather.main.temp_min)}</Text>
-						<Text style={styles.highLowLabel}>Low</Text>
-					</View>
-				</View>
 			</View>
 
-			{/* Weather Details Grid */}
-			<View style={styles.detailsGrid}>
-				<DetailCard
+			<View style={styles.metricsGrid}>
+				<DetailTile
 					icon="water-outline"
 					label="Humidity"
 					value={formatHumidity(weather.main.humidity)}
+					animateKey={weather.dt}
 					delay={100}
 				/>
-				<DetailCard
+				<DetailTile
 					icon="speedometer-outline"
-					label="Wind Speed"
+					label="Wind"
 					value={formatWindSpeed(weather.wind.speed)}
 					extraInfo={getWindDirection(weather.wind.deg)}
-					delay={200}
+					animateKey={weather.dt}
+					delay={180}
 				/>
-				<DetailCard
+				<DetailTile
 					icon="analytics-outline"
 					label="Pressure"
 					value={formatPressure(weather.main.pressure)}
-					delay={300}
+					animateKey={weather.dt}
+					delay={260}
 				/>
-				<DetailCard
+				<DetailTile
 					icon="eye-outline"
 					label="Visibility"
 					value={`${(weather.visibility / 1000).toFixed(1)} km`}
-					delay={400}
+					animateKey={weather.dt}
+					delay={340}
+				/>
+				<DetailTile
+					icon="sunny-outline"
+					label="Sunrise"
+					value={formatTime(weather.sys.sunrise)}
+					animateKey={weather.dt}
+					delay={420}
+				/>
+				<DetailTile
+					icon="moon-outline"
+					label="Sunset"
+					value={formatTime(weather.sys.sunset)}
+					animateKey={weather.dt}
+					delay={500}
 				/>
 			</View>
 		</Animated.View>
@@ -136,37 +166,48 @@ export const WeatherCard: React.FC<WeatherCardProps> = ({ weather }) => {
 };
 
 /**
- * DetailCard Component
- * Displays individual weather detail in a card with animation
+ * DetailTile Component
+ * Displays individual weather detail in a tile with animation
  */
-interface DetailCardProps {
+interface DetailTileProps {
 	icon: string;
 	label: string;
 	value: string;
 	extraInfo?: string;
+	animateKey: number;
 	delay?: number;
 }
 
-const DetailCard: React.FC<DetailCardProps> = ({ icon, label, value, extraInfo, delay = 0 }) => {
+const DetailTile: React.FC<DetailTileProps> = ({
+	icon,
+	label,
+	value,
+	extraInfo,
+	animateKey,
+	delay = 0,
+}) => {
 	const fadeAnim = useRef(new Animated.Value(0)).current;
-	const slideAnim = useRef(new Animated.Value(20)).current;
+	const slideAnim = useRef(new Animated.Value(12)).current;
 
 	useEffect(() => {
+		fadeAnim.setValue(0);
+		slideAnim.setValue(12);
+
 		Animated.parallel([
 			Animated.timing(fadeAnim, {
 				toValue: 1,
-				duration: 400,
+				duration: 360,
 				delay,
 				useNativeDriver: true,
 			}),
 			Animated.timing(slideAnim, {
 				toValue: 0,
-				duration: 400,
+				duration: 360,
 				delay,
 				useNativeDriver: true,
 			}),
 		]).start();
-	}, []);
+	}, [animateKey, delay, fadeAnim, slideAnim]);
 
 	return (
 		<Animated.View
@@ -178,10 +219,10 @@ const DetailCard: React.FC<DetailCardProps> = ({ icon, label, value, extraInfo, 
 				},
 			]}
 		>
-			<View style={styles.detailIconContainer}>
-				<Ionicons name={icon as any} size={32} color={colors.text.light} />
+			<View style={styles.detailHeader}>
+				<Ionicons name={icon as any} size={20} color={colors.text.light} />
+				<Text style={styles.detailLabel}>{label}</Text>
 			</View>
-			<Text style={styles.detailLabel}>{label}</Text>
 			<Text style={styles.detailValue}>{value}</Text>
 			{extraInfo && <Text style={styles.detailExtra}>{extraInfo}</Text>}
 		</Animated.View>
@@ -189,156 +230,162 @@ const DetailCard: React.FC<DetailCardProps> = ({ icon, label, value, extraInfo, 
 };
 
 const styles = StyleSheet.create({
-	locationContainer: {
+	card: {
+		backgroundColor: colors.glass,
+		borderRadius: borderRadius["2xl"],
+		padding: spacing.xl,
+		marginBottom: spacing.lg,
+		borderWidth: 1,
+		borderColor: colors.glassBorder,
+		shadowColor: colors.shadow,
+		shadowOffset: { width: 0, height: 14 },
+		shadowOpacity: 0.25,
+		shadowRadius: 24,
+		elevation: 12,
+	},
+	locationRow: {
 		flexDirection: "row",
 		alignItems: "center",
-		justifyContent: "center",
-		marginBottom: spacing["2xl"],
+		justifyContent: "space-between",
+		marginBottom: spacing.lg,
+		gap: spacing.md,
+	},
+	locationBadge: {
+		flexDirection: "row",
+		alignItems: "center",
 		gap: spacing.sm,
-	},
-	location: {
-		fontSize: typography.sizes["3xl"],
-		fontWeight: typography.weights.bold,
-		color: colors.text.light,
-		textShadowColor: "rgba(0, 0, 0, 0.3)",
-		textShadowOffset: { width: 0, height: 2 },
-		textShadowRadius: 8,
-	},
-	mainCard: {
-		backgroundColor: "rgba(255, 255, 255, 0.2)",
-		borderRadius: borderRadius["2xl"],
-		padding: spacing["2xl"],
-		marginBottom: spacing.xl,
-		shadowColor: "#000",
-		shadowOffset: { width: 0, height: 8 },
-		shadowOpacity: 0.2,
-		shadowRadius: 16,
-		elevation: 12,
+		backgroundColor: colors.glassStrong,
+		paddingVertical: spacing.xs,
+		paddingHorizontal: spacing.md,
+		borderRadius: borderRadius.full,
 		borderWidth: 1,
-		borderColor: "rgba(255, 255, 255, 0.3)",
+		borderColor: colors.glassBorder,
 	},
-	mainWeather: {
+	timeBadge: {
+		flexDirection: "row",
 		alignItems: "center",
-		paddingBottom: spacing.xl,
+		gap: spacing.xs,
+		paddingHorizontal: spacing.md,
+		paddingVertical: spacing.xs,
+		borderRadius: borderRadius.full,
+		backgroundColor: "rgba(15, 26, 38, 0.35)",
 	},
-	temperatureContainer: {
-		alignItems: "center",
-		marginTop: spacing.lg,
+	locationText: {
+		fontSize: typography.sizes.lg,
+		fontFamily: typography.fonts.title,
+		color: colors.text.light,
+	},
+	timeText: {
+		fontSize: typography.sizes.sm,
+		fontFamily: typography.fonts.label,
+		color: colors.text.muted,
+	},
+	heroRow: {
+		flexDirection: "row",
+		alignItems: "flex-start",
+		justifyContent: "space-between",
+		gap: spacing.lg,
+	},
+	tempColumn: {
+		flex: 1,
 	},
 	temperature: {
-		fontSize: 80,
-		fontWeight: typography.weights.bold,
+		fontSize: 72,
+		fontFamily: typography.fonts.display,
 		color: colors.text.light,
-		letterSpacing: -3,
-		textShadowColor: "rgba(0, 0, 0, 0.25)",
-		textShadowOffset: { width: 0, height: 3 },
-		textShadowRadius: 10,
+		letterSpacing: -2,
 	},
-	tempDetails: {
-		alignItems: "center",
-		marginTop: spacing.md,
-	},
-	description: {
-		fontSize: typography.sizes["2xl"],
+	condition: {
+		fontSize: typography.sizes.lg,
+		fontFamily: typography.fonts.title,
 		color: colors.text.light,
-		fontWeight: typography.weights.bold,
-		textTransform: "capitalize",
-		marginBottom: spacing.sm,
+		marginTop: spacing.xs,
 	},
 	feelsLikeContainer: {
 		flexDirection: "row",
 		alignItems: "center",
 		gap: spacing.xs,
-		backgroundColor: "rgba(255, 255, 255, 0.2)",
-		paddingHorizontal: spacing.md,
-		paddingVertical: spacing.xs,
-		borderRadius: borderRadius.full,
+		marginTop: spacing.sm,
 	},
 	feelsLike: {
-		fontSize: typography.sizes.base,
-		color: colors.text.light,
-		fontWeight: typography.weights.medium,
+		fontSize: typography.sizes.sm,
+		fontFamily: typography.fonts.body,
+		color: colors.text.muted,
 	},
-	highLowContainer: {
+	iconColumn: {
+		alignItems: "center",
+		gap: spacing.md,
+	},
+	iconBubble: {
+		padding: spacing.md,
+		borderRadius: borderRadius.full,
+		backgroundColor: colors.glassStrong,
+		borderWidth: 1,
+		borderColor: colors.glassBorder,
+	},
+	highLowPill: {
 		flexDirection: "row",
 		alignItems: "center",
-		justifyContent: "center",
-		backgroundColor: "rgba(255, 255, 255, 0.25)",
-		borderRadius: borderRadius.xl,
-		paddingVertical: spacing.lg,
-		paddingHorizontal: spacing.xl,
-		marginTop: spacing.lg,
-		gap: spacing.xl,
+		gap: spacing.sm,
+		paddingHorizontal: spacing.md,
+		paddingVertical: spacing.sm,
+		borderRadius: borderRadius.full,
+		backgroundColor: colors.surface,
+		borderWidth: 1,
+		borderColor: colors.glassBorder,
 	},
 	highLowItem: {
 		flexDirection: "row",
 		alignItems: "center",
 		gap: spacing.xs,
 	},
-	highLowText: {
-		fontSize: typography.sizes["2xl"],
-		fontWeight: typography.weights.bold,
+	highLowValue: {
+		fontSize: typography.sizes.base,
+		fontFamily: typography.fonts.label,
 		color: colors.text.light,
-		marginRight: spacing.xs,
 	},
-	highLowLabel: {
-		fontSize: typography.sizes.sm,
-		fontWeight: typography.weights.medium,
-		color: colors.text.light,
-		opacity: 0.8,
+	highLowDivider: {
+		width: 1,
+		height: 18,
+		backgroundColor: colors.border,
 	},
-	divider: {
-		width: 2,
-		height: 30,
-		backgroundColor: "rgba(255, 255, 255, 0.4)",
-		borderRadius: 1,
-	},
-	detailsGrid: {
+	metricsGrid: {
+		marginTop: spacing.xl,
 		flexDirection: "row",
 		flexWrap: "wrap",
 		gap: spacing.md,
 	},
 	detailCard: {
-		flex: 1,
-		minWidth: "47%",
-		backgroundColor: "rgba(255, 255, 255, 0.2)",
-		borderRadius: borderRadius.xl,
-		padding: spacing.lg,
-		alignItems: "center",
-		shadowColor: "#000",
-		shadowOffset: { width: 0, height: 4 },
-		shadowOpacity: 0.15,
-		shadowRadius: 12,
-		elevation: 6,
+		flexBasis: "48%",
+		flexGrow: 1,
+		backgroundColor: colors.surface,
+		borderRadius: borderRadius.lg,
+		padding: spacing.md,
 		borderWidth: 1,
-		borderColor: "rgba(255, 255, 255, 0.25)",
+		borderColor: colors.glassBorder,
 	},
-	detailIconContainer: {
-		marginBottom: spacing.md,
+	detailHeader: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: spacing.xs,
+		marginBottom: spacing.sm,
 	},
 	detailLabel: {
-		fontSize: typography.sizes.sm,
-		color: colors.text.light,
-		opacity: 0.85,
-		marginBottom: spacing.sm,
-		fontWeight: typography.weights.semibold,
+		fontSize: typography.sizes.xs,
+		fontFamily: typography.fonts.label,
 		textTransform: "uppercase",
-		letterSpacing: 0.5,
+		letterSpacing: 0.8,
+		color: colors.text.muted,
 	},
 	detailValue: {
-		fontSize: typography.sizes["2xl"],
-		fontWeight: typography.weights.bold,
+		fontSize: typography.sizes.xl,
+		fontFamily: typography.fonts.title,
 		color: colors.text.light,
 	},
 	detailExtra: {
-		fontSize: typography.sizes.base,
-		color: colors.text.light,
-		opacity: 0.9,
+		fontSize: typography.sizes.sm,
+		fontFamily: typography.fonts.label,
+		color: colors.text.muted,
 		marginTop: spacing.xs,
-		fontWeight: typography.weights.bold,
-		backgroundColor: "rgba(255, 255, 255, 0.2)",
-		paddingHorizontal: spacing.sm,
-		paddingVertical: 2,
-		borderRadius: borderRadius.sm,
 	},
 });

@@ -7,7 +7,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useRef } from "react";
 import { ActivityIndicator, Animated, StyleSheet, Text, View } from "react-native";
-import { colors, spacing, typography } from "../theme";
+import { borderRadius, colors, spacing, typography } from "../theme";
 
 interface LoadingScreenProps {
 	message?: string;
@@ -24,13 +24,13 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
 		Animated.loop(
 			Animated.sequence([
 				Animated.timing(pulseAnim, {
-					toValue: 1.2,
-					duration: 1000,
+					toValue: 1.12,
+					duration: 900,
 					useNativeDriver: true,
 				}),
 				Animated.timing(pulseAnim, {
 					toValue: 1,
-					duration: 1000,
+					duration: 900,
 					useNativeDriver: true,
 				}),
 			])
@@ -44,7 +44,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
 				useNativeDriver: true,
 			})
 		).start();
-	}, []);
+	}, [pulseAnim, rotateAnim]);
 
 	const rotate = rotateAnim.interpolate({
 		inputRange: [0, 1],
@@ -54,15 +54,17 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
 	return (
 		<LinearGradient colors={colors.gradients.clear} style={styles.container}>
 			<View style={styles.content}>
-				<Animated.View
-					style={{
-						transform: [{ scale: pulseAnim }, { rotate }],
-					}}
-				>
-					<Ionicons name="cloud" size={80} color={colors.text.light} style={styles.icon} />
-				</Animated.View>
-				<ActivityIndicator size="large" color={colors.text.light} />
-				<Text style={styles.message}>{message}</Text>
+				<View style={styles.card}>
+					<Animated.View
+						style={{
+							transform: [{ scale: pulseAnim }, { rotate }],
+						}}
+					>
+						<Ionicons name="cloud" size={72} color={colors.text.light} style={styles.icon} />
+					</Animated.View>
+					<ActivityIndicator size="large" color={colors.text.light} />
+					<Text style={styles.message}>{message}</Text>
+				</View>
 			</View>
 		</LinearGradient>
 	);
@@ -76,15 +78,31 @@ const styles = StyleSheet.create({
 	},
 	content: {
 		alignItems: "center",
+		paddingHorizontal: spacing.lg,
+	},
+	card: {
+		alignItems: "center",
+		paddingVertical: spacing.xl,
+		paddingHorizontal: spacing.xl,
+		backgroundColor: colors.glass,
+		borderRadius: borderRadius["2xl"],
+		borderWidth: 1,
+		borderColor: colors.glassBorder,
+		shadowColor: colors.shadow,
+		shadowOffset: { width: 0, height: 12 },
+		shadowOpacity: 0.25,
+		shadowRadius: 20,
+		elevation: 10,
 	},
 	icon: {
-		marginBottom: spacing.xl,
+		marginBottom: spacing.lg,
 		opacity: 0.9,
 	},
 	message: {
 		marginTop: spacing.lg,
 		fontSize: typography.sizes.lg,
+		fontFamily: typography.fonts.body,
 		color: colors.text.light,
-		fontWeight: typography.weights.medium,
+		textAlign: "center",
 	},
 });

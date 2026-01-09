@@ -1,9 +1,17 @@
 /**
  * Typography System
- * Defines consistent font sizes, weights, and line heights
+ * Defines consistent font families, sizes, weights, and line heights
  */
 
 export const typography = {
+	// Font Families
+	fonts: {
+		display: "Sora_700Bold",
+		title: "Sora_600SemiBold",
+		label: "Sora_500Medium",
+		body: "Sora_400Regular",
+	},
+
 	// Font Sizes
 	sizes: {
 		xs: 12,
@@ -18,7 +26,7 @@ export const typography = {
 		"6xl": 64,
 	},
 
-	// Font Weights
+	// Font Weights (kept for system fallbacks)
 	weights: {
 		light: "300" as const,
 		regular: "400" as const,

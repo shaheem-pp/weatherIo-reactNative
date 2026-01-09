@@ -40,26 +40,28 @@ export const ForecastCard: React.FC<ForecastCardProps> = ({ forecast, isToday })
 
 const styles = StyleSheet.create({
 	card: {
-		backgroundColor: "rgba(255, 255, 255, 0.2)",
+		backgroundColor: colors.glass,
 		borderRadius: borderRadius.lg,
 		padding: spacing.md,
 		marginRight: spacing.md,
 		alignItems: "center",
-		minWidth: 120,
+		minWidth: 130,
+		borderWidth: 1,
+		borderColor: colors.glassBorder,
 	},
 	day: {
 		fontSize: typography.sizes.base,
-		fontWeight: typography.weights.semibold,
+		fontFamily: typography.fonts.title,
 		color: colors.text.light,
-		marginBottom: spacing.sm,
+		marginBottom: spacing.xs,
 	},
 	icon: {
 		marginVertical: spacing.sm,
 	},
 	description: {
 		fontSize: typography.sizes.xs,
-		color: colors.text.light,
-		opacity: 0.9,
+		fontFamily: typography.fonts.body,
+		color: colors.text.muted,
 		marginBottom: spacing.sm,
 		textAlign: "center",
 	},
@@ -70,14 +72,13 @@ const styles = StyleSheet.create({
 	},
 	tempMax: {
 		fontSize: typography.sizes.lg,
-		fontWeight: typography.weights.bold,
+		fontFamily: typography.fonts.title,
 		color: colors.text.light,
 	},
 	tempMin: {
 		fontSize: typography.sizes.lg,
-		fontWeight: typography.weights.regular,
-		color: colors.text.light,
-		opacity: 0.7,
+		fontFamily: typography.fonts.body,
+		color: colors.text.muted,
 	},
 	rainContainer: {
 		flexDirection: "row",
@@ -87,7 +88,7 @@ const styles = StyleSheet.create({
 	},
 	rainText: {
 		fontSize: typography.sizes.xs,
-		color: colors.text.light,
-		opacity: 0.9,
+		fontFamily: typography.fonts.label,
+		color: colors.text.muted,
 	},
 });

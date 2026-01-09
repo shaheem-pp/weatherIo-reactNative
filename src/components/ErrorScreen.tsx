@@ -21,9 +21,9 @@ export const ErrorScreen: React.FC<ErrorScreenProps> = ({ message, onRetry }) =>
 	useEffect(() => {
 		// Shake animation for icon
 		Animated.sequence([
-			Animated.timing(shakeAnim, { toValue: 10, duration: 100, useNativeDriver: true }),
-			Animated.timing(shakeAnim, { toValue: -10, duration: 100, useNativeDriver: true }),
-			Animated.timing(shakeAnim, { toValue: 10, duration: 100, useNativeDriver: true }),
+			Animated.timing(shakeAnim, { toValue: 8, duration: 100, useNativeDriver: true }),
+			Animated.timing(shakeAnim, { toValue: -8, duration: 100, useNativeDriver: true }),
+			Animated.timing(shakeAnim, { toValue: 6, duration: 100, useNativeDriver: true }),
 			Animated.timing(shakeAnim, { toValue: 0, duration: 100, useNativeDriver: true }),
 		]).start();
 
@@ -33,7 +33,7 @@ export const ErrorScreen: React.FC<ErrorScreenProps> = ({ message, onRetry }) =>
 			duration: 600,
 			useNativeDriver: true,
 		}).start();
-	}, []);
+	}, [fadeAnim, shakeAnim]);
 
 	return (
 		<LinearGradient colors={colors.gradients.clouds} style={styles.container}>
@@ -50,12 +50,12 @@ export const ErrorScreen: React.FC<ErrorScreenProps> = ({ message, onRetry }) =>
 						transform: [{ translateX: shakeAnim }],
 					}}
 				>
-					<Ionicons name="alert-circle" size={80} color={colors.text.light} style={styles.icon} />
+					<Ionicons name="alert-circle" size={72} color={colors.text.light} style={styles.icon} />
 				</Animated.View>
-				<Text style={styles.title}>Oops!</Text>
+				<Text style={styles.title}>Weather hiccup</Text>
 				<Text style={styles.message}>{message}</Text>
-				<TouchableOpacity style={styles.retryButton} onPress={onRetry} activeOpacity={0.7}>
-					<Ionicons name="refresh" size={20} color={colors.text.light} />
+				<TouchableOpacity style={styles.retryButton} onPress={onRetry} activeOpacity={0.75}>
+					<Ionicons name="refresh" size={18} color={colors.text.light} />
 					<Text style={styles.retryText}>Try Again</Text>
 				</TouchableOpacity>
 			</Animated.View>
@@ -72,36 +72,49 @@ const styles = StyleSheet.create({
 	},
 	content: {
 		alignItems: "center",
+		backgroundColor: colors.glass,
+		borderRadius: borderRadius["2xl"],
+		paddingVertical: spacing.xl,
+		paddingHorizontal: spacing.xl,
+		borderWidth: 1,
+		borderColor: colors.glassBorder,
+		shadowColor: colors.shadow,
+		shadowOffset: { width: 0, height: 10 },
+		shadowOpacity: 0.25,
+		shadowRadius: 18,
+		elevation: 10,
 	},
 	icon: {
 		marginBottom: spacing.lg,
 		opacity: 0.9,
 	},
 	title: {
-		fontSize: typography.sizes["3xl"],
-		fontWeight: typography.weights.bold,
+		fontSize: typography.sizes["2xl"],
+		fontFamily: typography.fonts.title,
 		color: colors.text.light,
-		marginBottom: spacing.md,
+		marginBottom: spacing.sm,
 	},
 	message: {
-		fontSize: typography.sizes.lg,
-		color: colors.text.light,
+		fontSize: typography.sizes.base,
+		fontFamily: typography.fonts.body,
+		color: colors.text.muted,
 		textAlign: "center",
-		marginBottom: spacing.xl,
-		opacity: 0.9,
+		marginBottom: spacing.lg,
 	},
 	retryButton: {
 		flexDirection: "row",
 		alignItems: "center",
-		backgroundColor: "rgba(255, 255, 255, 0.3)",
+		backgroundColor: colors.surface,
 		paddingHorizontal: spacing.xl,
 		paddingVertical: spacing.md,
-		borderRadius: borderRadius.lg,
+		borderRadius: borderRadius.full,
 		gap: spacing.sm,
+		borderWidth: 1,
+		borderColor: colors.glassBorder,
 	},
 	retryText: {
-		fontSize: typography.sizes.lg,
-		fontWeight: typography.weights.semibold,
+		fontSize: typography.sizes.base,
+		fontFamily: typography.fonts.label,
 		color: colors.text.light,
 	},
 });
