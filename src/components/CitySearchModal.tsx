@@ -57,12 +57,88 @@ export const CitySearchModal: React.FC<CitySearchModalProps> = ({
 		{ name: "Mumbai", country: "IN", lat: 19.076, lon: 72.8777 },
 		{ name: "Los Angeles", country: "US", state: "CA", lat: 34.0522, lon: -118.2437 },
 		{ name: "Toronto", country: "CA", lat: 43.6532, lon: -79.3832 },
+		{ name: "Berlin", country: "DE", lat: 52.52, lon: 13.405 },
+		{ name: "Madrid", country: "ES", lat: 40.4168, lon: -3.7038 },
+		{ name: "Rome", country: "IT", lat: 41.9028, lon: 12.4964 },
+		{ name: "Amsterdam", country: "NL", lat: 52.3676, lon: 4.9041 },
+		{ name: "Bangkok", country: "TH", lat: 13.7563, lon: 100.5018 },
+		{ name: "Hong Kong", country: "HK", lat: 22.3193, lon: 114.1694 },
+		{ name: "Seoul", country: "KR", lat: 37.5665, lon: 126.978 },
+		{ name: "Istanbul", country: "TR", lat: 41.0082, lon: 28.9784 },
+		{ name: "São Paulo", country: "BR", lat: -23.5505, lon: -46.6333 },
+		{ name: "Mexico City", country: "MX", lat: 19.4326, lon: -99.1332 },
 	];
+
+	// Fuzzy search algorithm
+	const fuzzyMatch = (text: string, query: string): number => {
+		const textLower = text.toLowerCase();
+		const queryLower = query.toLowerCase();
+
+		// Exact match gets highest score
+		if (textLower === queryLower) return 100;
+
+		// Starts with query gets high score
+		if (textLower.startsWith(queryLower)) return 90;
+
+		// Contains query as substring
+		if (textLower.includes(queryLower)) return 80;
+
+		// Character-by-character fuzzy matching
+		let score = 0;
+		let textIndex = 0;
+
+		for (let i = 0; i < queryLower.length; i++) {
+			const char = queryLower[i];
+			const foundIndex = textLower.indexOf(char, textIndex);
+
+			if (foundIndex === -1) return 0; // Character not found
+
+			// Consecutive characters get bonus points
+			if (foundIndex === textIndex) {
+				score += 10;
+			} else {
+				score += Math.max(1, 10 - (foundIndex - textIndex));
+			}
+
+			textIndex = foundIndex + 1;
+		}
+
+		// Penalize longer text (prefer shorter matches)
+		score -= text.length * 0.1;
+
+		return Math.max(0, score);
+	};
+
+	// Filter popular cities with fuzzy search
+	const getFilteredPopularCities = (query: string): City[] => {
+		if (!query.trim()) return popularCities;
+
+		const citiesWithScores = popularCities.map(city => ({
+			city,
+			score: Math.max(
+				fuzzyMatch(city.name, query),
+				city.state ? fuzzyMatch(city.state, query) : 0,
+				fuzzyMatch(city.country, query)
+			),
+		}));
+
+		return citiesWithScores
+			.filter(item => item.score > 0)
+			.sort((a, b) => b.score - a.score)
+			.map(item => item.city)
+			.slice(0, 10);
+	};
 
 	const searchCities = async (query: string) => {
 		if (!query.trim() || query.length < 2) {
 			setSearchResults([]);
 			return;
+		}
+
+		// First, show local fuzzy search results immediately
+		const localResults = getFilteredPopularCities(query);
+		if (localResults.length > 0) {
+			setSearchResults(localResults);
 		}
 
 		setLoading(true);
@@ -74,7 +150,7 @@ export const CitySearchModal: React.FC<CitySearchModalProps> = ({
 			console.log("Searching for city:", query);
 			const url = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(
 				query
-			)}&limit=5&appid=${API_KEY}`;
+			)}&limit=8&appid=${API_KEY}`;
 
 			const response = await fetch(url);
 
@@ -86,9 +162,26 @@ export const CitySearchModal: React.FC<CitySearchModalProps> = ({
 
 			const data = await response.json();
 			console.log("Search results:", data);
-			setSearchResults(data);
+
+			// Combine API results with local fuzzy matches, remove duplicates
+			const combinedResults: City[] = [...data];
+			const apiCityNames = new Set(data.map((c: City) => c.name.toLowerCase()));
+
+			localResults.forEach(localCity => {
+				if (!apiCityNames.has(localCity.name.toLowerCase())) {
+					combinedResults.push(localCity);
+				}
+			});
+
+			setSearchResults(combinedResults.slice(0, 10));
 		} catch (err) {
-			setError("Failed to search cities. Please try again.");
+			// On error, still show local fuzzy results
+			const localResults = getFilteredPopularCities(query);
+			if (localResults.length > 0) {
+				setSearchResults(localResults);
+			} else {
+				setError("Failed to search cities. Showing local results only.");
+			}
 			console.error("City search error:", err);
 		} finally {
 			setLoading(false);
@@ -177,19 +270,26 @@ export const CitySearchModal: React.FC<CitySearchModalProps> = ({
 
 					{/* Results / Popular Cities */}
 					<View style={styles.resultsContainer}>
-						{loading ? (
+						{loading && searchResults.length === 0 ? (
 							<View style={styles.loadingContainer}>
 								<ActivityIndicator size="large" color={colors.white} />
 								<Text style={styles.loadingText}>Searching...</Text>
 							</View>
-						) : error ? (
+						) : error && searchResults.length === 0 ? (
 							<View style={styles.errorContainer}>
 								<Ionicons name="alert-circle" size={48} color={colors.error} />
 								<Text style={styles.errorText}>{error}</Text>
 							</View>
 						) : searchResults.length > 0 ? (
 							<>
-								<Text style={styles.sectionTitle}>Search Results</Text>
+								<View style={styles.sectionHeader}>
+									<Text style={styles.sectionTitle}>
+										{searchQuery.length > 0 ? "Search Results" : "Popular Cities"}
+									</Text>
+									{loading && (
+										<ActivityIndicator size="small" color={colors.white} style={{ opacity: 0.5 }} />
+									)}
+								</View>
 								<FlatList
 									data={searchResults}
 									renderItem={renderCityItem}
@@ -286,11 +386,16 @@ const styles = StyleSheet.create({
 	resultsContainer: {
 		flex: 1,
 	},
+	sectionHeader: {
+		flexDirection: "row",
+		alignItems: "center",
+		justifyContent: "space-between",
+		marginBottom: spacing.sm,
+		marginTop: spacing.xs,
+	},
 	sectionTitle: {
 		...textStyles.h6,
 		color: colors.white,
-		marginBottom: spacing.sm,
-		marginTop: spacing.xs,
 		opacity: 0.7,
 	},
 	cityItem: {
