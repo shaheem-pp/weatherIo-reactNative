@@ -3,6 +3,7 @@
  * Central export file for all components
  */
 
+export * from "./CitySearchModal";
 export * from "./CurrentWeatherCard";
 export * from "./DailyForecast";
 export * from "./ErrorScreen";

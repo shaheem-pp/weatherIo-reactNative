@@ -6,10 +6,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { StatusBar } from "expo-status-bar";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
+	CitySearchModal,
 	CurrentWeatherCard,
 	DailyForecast,
 	ErrorScreen,
@@ -24,13 +25,25 @@ import { getHourlyForecast, groupForecastByDay, isNightTime } from "../utils";
 
 export const HomeScreen: React.FC = () => {
 	const { coordinates, loading: locationLoading, error: locationError } = useLocation();
+	const [selectedCity, setSelectedCity] = useState<{
+		lat: number;
+		lon: number;
+		name: string;
+	} | null>(null);
+	const [searchModalVisible, setSearchModalVisible] = useState(false);
+
+	// Use selected city coordinates or user's location
+	const weatherCoordinates = selectedCity
+		? { latitude: selectedCity.lat, longitude: selectedCity.lon }
+		: coordinates;
+
 	const {
 		currentWeather,
 		forecast,
 		loading: weatherLoading,
 		error: weatherError,
 		refetch,
-	} = useWeather(coordinates);
+	} = useWeather(weatherCoordinates);
 
 	// Determine if it's night time
 	const isNight = useMemo(() => {
@@ -54,6 +67,16 @@ export const HomeScreen: React.FC = () => {
 		if (!forecast) return [];
 		return groupForecastByDay(forecast.list).slice(0, 5);
 	}, [forecast]);
+
+	const handleSelectCity = (lat: number, lon: number, cityName: string) => {
+		setSelectedCity({ lat, lon, name: cityName });
+	};
+
+	const handleUseCurrentLocation = () => {
+		setSelectedCity(null);
+	};
+
+	const currentDisplayName = selectedCity?.name || currentWeather?.name || "Loading...";
 
 	// Loading state
 	if (locationLoading || weatherLoading) {
@@ -86,11 +109,18 @@ export const HomeScreen: React.FC = () => {
 				<SafeAreaView style={styles.safeArea} edges={["top"]}>
 					{/* Header */}
 					<View style={styles.header}>
-						<TouchableOpacity style={styles.iconButton}>
-							<Ionicons name="location-outline" size={24} color={theme.text} />
+						<TouchableOpacity
+							style={styles.iconButton}
+							onPress={selectedCity ? handleUseCurrentLocation : () => {}}
+						>
+							<Ionicons
+								name={selectedCity ? "navigate" : "location"}
+								size={24}
+								color={theme.text}
+							/>
 						</TouchableOpacity>
-						<TouchableOpacity style={styles.iconButton}>
-							<Ionicons name="menu-outline" size={24} color={theme.text} />
+						<TouchableOpacity style={styles.iconButton} onPress={() => setSearchModalVisible(true)}>
+							<Ionicons name="search-outline" size={24} color={theme.text} />
 						</TouchableOpacity>
 					</View>
 
@@ -162,6 +192,14 @@ export const HomeScreen: React.FC = () => {
 							</Text>
 						</View>
 					</ScrollView>
+
+					{/* City Search Modal */}
+					<CitySearchModal
+						visible={searchModalVisible}
+						onClose={() => setSearchModalVisible(false)}
+						onSelectCity={handleSelectCity}
+						currentCity={currentDisplayName}
+					/>
 				</SafeAreaView>
 			</LinearGradient>
 		</View>
