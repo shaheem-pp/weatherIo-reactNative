@@ -1,174 +1,170 @@
 /**
- * HomeScreen Component
- * Main screen displaying current weather with city picker
+ * Home Screen
+ * Main weather display screen with all weather information
  */
 
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useState } from "react";
-import {
-	RefreshControl,
-	ScrollView,
-	StatusBar,
-	StyleSheet,
-	Text,
-	TouchableOpacity,
-	View,
-} from "react-native";
+import { StatusBar } from "expo-status-bar";
+import React, { useMemo } from "react";
+import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { CityPicker, ErrorScreen, LoadingScreen, WeatherCard } from "../components";
-import type { City } from "../constants/cities";
-import { CITIES } from "../constants/cities";
+import {
+	CurrentWeatherCard,
+	DailyForecast,
+	ErrorScreen,
+	HourlyForecast,
+	LoadingScreen,
+	WeatherDetails,
+} from "../components";
 import { useLocation, useWeather } from "../hooks";
-import { getCurrentWeatherByCity } from "../services/weatherService";
-import { borderRadius, colors, spacing, typography } from "../theme";
-import type { CurrentWeather } from "../types/weather";
-import { formatDate, getWeatherGradient } from "../utils";
+import { getWeatherTheme } from "../theme";
+import { spacing } from "../theme/spacing";
+import { getHourlyForecast, groupForecastByDay, isNightTime } from "../utils";
 
 export const HomeScreen: React.FC = () => {
-	const [searchedWeather, setSearchedWeather] = useState<CurrentWeather | null>(null);
-	const [searchLoading, setSearchLoading] = useState(false);
-	const [searchError, setSearchError] = useState<string | null>(null);
-
-	// Fetch location
+	const { coordinates, loading: locationLoading, error: locationError } = useLocation();
 	const {
-		coordinates,
-		loading: locationLoading,
-		error: locationError,
-		refetch: refetchLocation,
-	} = useLocation();
-
-	// Fetch weather data for current location
-	const {
-		currentWeather: locationWeather,
+		currentWeather,
+		forecast,
 		loading: weatherLoading,
 		error: weatherError,
-		refetch: refetchWeather,
+		refetch,
 	} = useWeather(coordinates);
 
-	// Determine which weather to display
-	const currentWeather = searchedWeather || locationWeather;
-	const isShowingSearchResult = searchedWeather !== null;
+	// Determine if it's night time
+	const isNight = useMemo(() => {
+		if (!currentWeather) return false;
+		return isNightTime(currentWeather.dt, currentWeather.sys.sunrise, currentWeather.sys.sunset);
+	}, [currentWeather]);
 
-	// Handle city selection from picker
-	const handleCitySelect = async (city: City) => {
-		try {
-			setSearchLoading(true);
-			setSearchError(null);
-			const weather = await getCurrentWeatherByCity(city.name);
-			setSearchedWeather(weather);
-		} catch (error) {
-			setSearchError(error instanceof Error ? error.message : "Failed to load city weather");
-			setSearchedWeather(null);
-		} finally {
-			setSearchLoading(false);
-		}
-	};
+	// Get theme based on weather conditions
+	const theme = useMemo(() => {
+		if (!currentWeather) return getWeatherTheme("Clear", false);
+		return getWeatherTheme(currentWeather.weather[0].main, isNight);
+	}, [currentWeather, isNight]);
 
-	// Handle clear search and return to current location
-	const handleClearSearch = () => {
-		setSearchedWeather(null);
-		setSearchError(null);
-	};
+	// Process forecast data
+	const hourlyForecast = useMemo(() => {
+		if (!forecast) return [];
+		return getHourlyForecast(forecast.list, 8);
+	}, [forecast]);
 
-	// Handle refresh
-	const handleRefresh = () => {
-		if (isShowingSearchResult && searchedWeather) {
-			// Re-fetch the same city
-			handleCitySelect({
-				name: searchedWeather.name,
-				country: searchedWeather.sys.country,
-				lat: searchedWeather.coord.lat,
-				lon: searchedWeather.coord.lon,
-				display: `${searchedWeather.name}, ${searchedWeather.sys.country}`,
-			});
-		} else if (coordinates) {
-			refetchWeather();
-		} else {
-			refetchLocation();
-		}
-	};
+	const dailyForecast = useMemo(() => {
+		if (!forecast) return [];
+		return groupForecastByDay(forecast.list).slice(0, 5);
+	}, [forecast]);
 
-	// Show loading screen
-	if (
-		(locationLoading && !searchedWeather) ||
-		(weatherLoading && !currentWeather && !searchedWeather)
-	) {
-		return <LoadingScreen message="Getting your weather..." />;
-	}
-
-	// Show search loading
-	if (searchLoading) {
-		return <LoadingScreen message="Searching for city..." />;
-	}
-
-	// Show error screen for location/weather errors (only if not showing search result)
-	if (!searchedWeather && (locationError || weatherError)) {
+	// Loading state
+	if (locationLoading || weatherLoading) {
 		return (
-			<ErrorScreen
-				message={locationError || weatherError || "Something went wrong"}
-				onRetry={handleRefresh}
+			<LoadingScreen
+				message={locationLoading ? "Getting your location..." : "Loading weather data..."}
 			/>
 		);
 	}
 
-	// Show search error as overlay
-	if (searchError && !searchedWeather) {
-		return <ErrorScreen message={searchError} onRetry={() => setSearchError(null)} />;
+	// Error state
+	if (locationError || weatherError) {
+		return (
+			<ErrorScreen
+				message={locationError || weatherError || "Something went wrong"}
+				onRetry={refetch}
+			/>
+		);
 	}
 
-	// Show error if no data
-	if (!currentWeather) {
-		return <ErrorScreen message="Unable to load weather data" onRetry={handleRefresh} />;
+	// No data state
+	if (!currentWeather || !forecast) {
+		return <LoadingScreen message="Preparing weather data..." />;
 	}
-
-	// Get gradient based on weather condition
-	const gradientColors = colors.gradients[getWeatherGradient(currentWeather.weather[0].main)];
 
 	return (
-		<LinearGradient colors={gradientColors} style={styles.container}>
-			<StatusBar barStyle="light-content" />
-			<SafeAreaView style={styles.safeArea}>
-				<View pointerEvents="none" style={styles.glowTop} />
-				<View pointerEvents="none" style={styles.glowBottom} />
-				<ScrollView
-					contentContainerStyle={styles.scrollContent}
-					showsVerticalScrollIndicator={false}
-					refreshControl={
-						<RefreshControl
-							refreshing={weatherLoading || searchLoading}
-							onRefresh={handleRefresh}
-							tintColor={colors.text.light}
-						/>
-					}
-				>
+		<View style={styles.container}>
+			<StatusBar style={isNight ? "light" : "auto"} />
+			<LinearGradient colors={theme.gradient} style={styles.gradient}>
+				<SafeAreaView style={styles.safeArea} edges={["top"]}>
+					{/* Header */}
 					<View style={styles.header}>
-						<View>
-							<Text style={styles.title}>Weatherio</Text>
-							<Text style={styles.subtitle}>{formatDate(currentWeather.dt)}</Text>
-						</View>
+						<TouchableOpacity style={styles.iconButton}>
+							<Ionicons name="location-outline" size={24} color={theme.text} />
+						</TouchableOpacity>
+						<TouchableOpacity style={styles.iconButton}>
+							<Ionicons name="menu-outline" size={24} color={theme.text} />
+						</TouchableOpacity>
 					</View>
 
-					{/* City Picker */}
-					<CityPicker cities={CITIES} onSelectCity={handleCitySelect} />
+					{/* Scrollable Content */}
+					<ScrollView
+						style={styles.scrollView}
+						contentContainerStyle={styles.scrollContent}
+						showsVerticalScrollIndicator={false}
+						refreshControl={
+							<RefreshControl
+								refreshing={weatherLoading}
+								onRefresh={refetch}
+								tintColor={theme.text}
+								colors={[theme.text]}
+							/>
+						}
+					>
+						{/* Current Weather */}
+						<CurrentWeatherCard weather={currentWeather} textColor={theme.text} />
 
-					{/* Clear Button - Show when displaying search result */}
-					{isShowingSearchResult && (
-						<TouchableOpacity
-							style={styles.clearButton}
-							onPress={handleClearSearch}
-							activeOpacity={0.7}
-						>
-							<Ionicons name="close-circle" size={20} color={colors.text.light} />
-							<Text style={styles.clearButtonText}>Clear & Return to Current Location</Text>
-						</TouchableOpacity>
-					)}
+						{/* Hourly Forecast */}
+						{hourlyForecast.length > 0 && (
+							<HourlyForecast forecast={hourlyForecast} textColor={theme.text} />
+						)}
 
-					{/* Current Weather Card */}
-					<WeatherCard weather={currentWeather} />
-				</ScrollView>
-			</SafeAreaView>
-		</LinearGradient>
+						{/* Daily Forecast */}
+						{dailyForecast.length > 0 && (
+							<DailyForecast forecast={dailyForecast} textColor={theme.text} />
+						)}
+
+						{/* Weather Details */}
+						<WeatherDetails weather={currentWeather} textColor={theme.text} />
+
+						{/* Sun Times */}
+						<View style={styles.sunTimesContainer}>
+							<View style={styles.sunTimeCard}>
+								<Ionicons name="sunny-outline" size={24} color={theme.text} />
+								<View>
+									<Text style={[styles.sunTimeLabel, { color: theme.textSecondary }]}>Sunrise</Text>
+									<Text style={[styles.sunTimeValue, { color: theme.text }]}>
+										{new Date(currentWeather.sys.sunrise * 1000).toLocaleTimeString("en-US", {
+											hour: "numeric",
+											minute: "2-digit",
+										})}
+									</Text>
+								</View>
+							</View>
+							<View style={styles.sunTimeCard}>
+								<Ionicons name="moon-outline" size={24} color={theme.text} />
+								<View>
+									<Text style={[styles.sunTimeLabel, { color: theme.textSecondary }]}>Sunset</Text>
+									<Text style={[styles.sunTimeValue, { color: theme.text }]}>
+										{new Date(currentWeather.sys.sunset * 1000).toLocaleTimeString("en-US", {
+											hour: "numeric",
+											minute: "2-digit",
+										})}
+									</Text>
+								</View>
+							</View>
+						</View>
+
+						{/* Footer */}
+						<View style={styles.footer}>
+							<Text style={[styles.footerText, { color: theme.textSecondary }]}>
+								Last updated: {new Date(currentWeather.dt * 1000).toLocaleTimeString()}
+							</Text>
+							<Text style={[styles.footerText, { color: theme.textSecondary }]}>
+								Data provided by OpenWeatherMap
+							</Text>
+						</View>
+					</ScrollView>
+				</SafeAreaView>
+			</LinearGradient>
+		</View>
 	);
 };
 
@@ -176,80 +172,68 @@ const styles = StyleSheet.create({
 	container: {
 		flex: 1,
 	},
+	gradient: {
+		flex: 1,
+	},
 	safeArea: {
 		flex: 1,
 	},
-	scrollContent: {
-		flexGrow: 1,
-		padding: spacing.lg,
-		paddingTop: spacing.md,
-		paddingBottom: spacing.lg,
-	},
 	header: {
 		flexDirection: "row",
-		alignItems: "center",
 		justifyContent: "space-between",
-		marginBottom: spacing.lg,
+		alignItems: "center",
+		paddingHorizontal: spacing.base,
+		paddingVertical: spacing.sm,
 	},
-	title: {
-		fontSize: typography.sizes["3xl"],
-		fontFamily: typography.fonts.display,
-		color: colors.text.light,
+	iconButton: {
+		width: 40,
+		height: 40,
+		borderRadius: 20,
+		backgroundColor: "rgba(255, 255, 255, 0.15)",
+		justifyContent: "center",
+		alignItems: "center",
 	},
-	subtitle: {
-		fontSize: typography.sizes.sm,
-		fontFamily: typography.fonts.body,
-		color: colors.text.muted,
-		marginTop: spacing.xs,
+	scrollView: {
+		flex: 1,
 	},
-	headerBadge: {
+	scrollContent: {
+		paddingBottom: spacing["3xl"],
+	},
+	sunTimesContainer: {
 		flexDirection: "row",
+		justifyContent: "space-around",
+		paddingHorizontal: spacing.base,
+		marginVertical: spacing.xl,
+		gap: spacing.md,
+	},
+	sunTimeCard: {
+		flex: 1,
+		flexDirection: "row",
+		alignItems: "center",
+		gap: spacing.md,
+		backgroundColor: "rgba(255, 255, 255, 0.15)",
+		padding: spacing.base,
+		borderRadius: 16,
+		borderWidth: 1,
+		borderColor: "rgba(255, 255, 255, 0.2)",
+	},
+	sunTimeLabel: {
+		fontSize: 12,
+		opacity: 0.8,
+	},
+	sunTimeValue: {
+		fontSize: 16,
+		fontWeight: "600",
+	},
+	footer: {
 		alignItems: "center",
 		gap: spacing.xs,
-		backgroundColor: colors.glassStrong,
-		paddingHorizontal: spacing.md,
-		paddingVertical: spacing.xs,
-		borderRadius: borderRadius.full,
-		borderWidth: 1,
-		borderColor: colors.glassBorder,
+		paddingHorizontal: spacing.base,
+		marginTop: spacing.xl,
 	},
-	clearButton: {
-		flexDirection: "row",
-		alignItems: "center",
-		justifyContent: "center",
-		backgroundColor: "rgba(255, 255, 255, 0.25)",
-		borderRadius: borderRadius.full,
-		paddingVertical: spacing.sm,
-		paddingHorizontal: spacing.lg,
-		marginBottom: spacing.lg,
-		gap: spacing.sm,
-		shadowColor: "#000",
-		shadowOffset: { width: 0, height: 2 },
-		shadowOpacity: 0.1,
-		shadowRadius: 4,
-		elevation: 3,
-	},
-	clearButtonText: {
-		fontSize: typography.sizes.sm,
-		fontWeight: typography.weights.semibold,
-		color: colors.text.light,
-	},
-	glowTop: {
-		position: "absolute",
-		right: -120,
-		top: -80,
-		width: 260,
-		height: 260,
-		borderRadius: 130,
-		backgroundColor: colors.glow,
-	},
-	glowBottom: {
-		position: "absolute",
-		left: -140,
-		bottom: -120,
-		width: 280,
-		height: 280,
-		borderRadius: 140,
-		backgroundColor: colors.glowStrong,
+	footerText: {
+		fontSize: 11,
+		opacity: 0.7,
+		textAlign: "center",
 	},
 });

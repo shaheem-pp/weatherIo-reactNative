@@ -1,151 +1,178 @@
 /**
- * Weather Utilities
- * Helper functions for weather-related operations
+ * Weather Utility Functions
+ * Helper functions for weather data processing
  */
 
-import type { GradientKey } from "../theme";
+import type { ForecastDay, ForecastItem } from "../types/weather";
 
 /**
- * Formats temperature with degree symbol
- * @param temp - Temperature value
- * @returns Formatted temperature string (e.g., "25°")
+ * Get weather icon URL from icon code
  */
-export const formatTemperature = (temp: number): string => {
-	return `${Math.round(temp)}°`;
+export const getWeatherIconUrl = (iconCode: string, size: "2x" | "4x" = "2x"): string => {
+	return `https://openweathermap.org/img/wn/${iconCode}@${size}.png`;
 };
 
 /**
- * Gets weather icon name based on OpenWeatherMap icon code
- * Uses Ionicons from @expo/vector-icons
- * @param iconCode - OpenWeatherMap icon code (e.g., "01d")
- * @returns Ionicon name
+ * Check if it's currently night time based on current time and sunrise/sunset
  */
-export const getWeatherIcon = (iconCode: string): string => {
-	const iconMap: Record<string, string> = {
-		"01d": "sunny", // clear sky day
-		"01n": "moon", // clear sky night
-		"02d": "partly-sunny", // few clouds day
-		"02n": "cloudy-night", // few clouds night
-		"03d": "cloud", // scattered clouds
-		"03n": "cloud",
-		"04d": "cloudy", // broken clouds
-		"04n": "cloudy",
-		"09d": "rainy", // shower rain
-		"09n": "rainy",
-		"10d": "rainy", // rain day
-		"10n": "rainy", // rain night
-		"11d": "thunderstorm", // thunderstorm
-		"11n": "thunderstorm",
-		"13d": "snow", // snow
-		"13n": "snow",
-		"50d": "cloudy", // mist
-		"50n": "cloudy",
-	};
-
-	return iconMap[iconCode] || "partly-sunny";
+export const isNightTime = (currentTime: number, sunrise: number, sunset: number): boolean => {
+	return currentTime < sunrise || currentTime > sunset;
 };
 
 /**
- * Gets gradient colors based on weather condition
- * @param weatherMain - Main weather condition (e.g., "Clear", "Clouds", "Rain")
- * @returns Gradient key for theme colors
+ * Group forecast items by day
  */
-export const getWeatherGradient = (weatherMain: string): GradientKey => {
-	const condition = weatherMain.toLowerCase();
+export const groupForecastByDay = (forecastList: ForecastItem[]): ForecastDay[] => {
+	const days: { [key: string]: ForecastItem[] } = {};
 
-	if (condition.includes("clear")) return "clear";
-	if (condition.includes("cloud")) return "clouds";
-	if (condition.includes("rain")) return "rain";
-	if (condition.includes("thunderstorm")) return "thunderstorm";
-	if (condition.includes("snow")) return "snow";
-	if (condition.includes("drizzle")) return "drizzle";
-	if (condition.includes("mist") || condition.includes("fog") || condition.includes("haze")) {
-		return "mist";
+	// Group forecast items by date
+	forecastList.forEach(item => {
+		const date = new Date(item.dt * 1000).toLocaleDateString();
+		if (!days[date]) {
+			days[date] = [];
+		}
+		days[date].push(item);
+	});
+
+	// Calculate min/max for each day and create ForecastDay objects
+	const forecastDays: ForecastDay[] = Object.entries(days).map(([date, items]) => {
+		const temps = items.map(item => item.main.temp);
+		const temp_min = Math.min(...temps);
+		const temp_max = Math.max(...temps);
+
+		// Use the weather condition that appears most frequently during the day
+		const weatherCounts: { [key: string]: number } = {};
+		items.forEach(item => {
+			const weather = item.weather[0].main;
+			weatherCounts[weather] = (weatherCounts[weather] || 0) + 1;
+		});
+		const dominantWeather = Object.keys(weatherCounts).reduce((a, b) =>
+			weatherCounts[a] > weatherCounts[b] ? a : b
+		);
+
+		const weatherItem = items.find(item => item.weather[0].main === dominantWeather)!;
+
+		// Calculate average precipitation probability
+		const avgPop = items.reduce((sum, item) => sum + item.pop, 0) / items.length;
+
+		return {
+			date,
+			dt: items[0].dt,
+			temp_min,
+			temp_max,
+			weather: weatherItem.weather,
+			pop: avgPop,
+		};
+	});
+
+	return forecastDays;
+};
+
+/**
+ * Get hourly forecast (next 24 hours)
+ */
+export const getHourlyForecast = (
+	forecastList: ForecastItem[],
+	count: number = 8
+): ForecastItem[] => {
+	return forecastList.slice(0, count);
+};
+
+/**
+ * Get wind direction from degrees
+ */
+export const getWindDirection = (degrees: number): string => {
+	const directions = [
+		"N",
+		"NNE",
+		"NE",
+		"ENE",
+		"E",
+		"ESE",
+		"SE",
+		"SSE",
+		"S",
+		"SSW",
+		"SW",
+		"WSW",
+		"W",
+		"WNW",
+		"NW",
+		"NNW",
+	];
+	const index = Math.round(degrees / 22.5) % 16;
+	return directions[index];
+};
+
+/**
+ * Convert meters per second to kilometers per hour
+ */
+export const msToKmh = (ms: number): number => {
+	return Math.round(ms * 3.6);
+};
+
+/**
+ * Convert meters per second to miles per hour
+ */
+export const msToMph = (ms: number): number => {
+	return Math.round(ms * 2.237);
+};
+
+/**
+ * Get UV Index description
+ */
+export const getUVIndexDescription = (uvIndex: number): string => {
+	if (uvIndex <= 2) return "Low";
+	if (uvIndex <= 5) return "Moderate";
+	if (uvIndex <= 7) return "High";
+	if (uvIndex <= 10) return "Very High";
+	return "Extreme";
+};
+
+/**
+ * Get air quality description
+ */
+export const getAirQualityDescription = (aqi: number): string => {
+	switch (aqi) {
+		case 1:
+			return "Good";
+		case 2:
+			return "Fair";
+		case 3:
+			return "Moderate";
+		case 4:
+			return "Poor";
+		case 5:
+			return "Very Poor";
+		default:
+			return "Unknown";
 	}
-
-	return "clear"; // default
 };
 
 /**
- * Capitalizes first letter of each word
- * @param text - Text to capitalize
- * @returns Capitalized text
+ * Format visibility in km
  */
-export const capitalizeWords = (text: string): string => {
-	return text
+export const formatVisibility = (meters: number): string => {
+	const km = meters / 1000;
+	return km >= 10 ? "10+ km" : `${km.toFixed(1)} km`;
+};
+
+/**
+ * Get weather description with proper capitalization
+ */
+export const formatWeatherDescription = (description: string): string => {
+	return description
 		.split(" ")
 		.map(word => word.charAt(0).toUpperCase() + word.slice(1))
 		.join(" ");
 };
 
 /**
- * Gets wind direction from degrees
- * @param degrees - Wind direction in degrees
- * @returns Wind direction (e.g., "N", "NE", "E")
+ * Get feels like description
  */
-export const getWindDirection = (degrees: number): string => {
-	const directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
-	const index = Math.round(degrees / 45) % 8;
-	return directions[index];
-};
-
-/**
- * Formats wind speed with unit
- * @param speed - Wind speed in m/s
- * @returns Formatted wind speed in km/h as integer (e.g., "19 km/h")
- */
-export const formatWindSpeed = (speed: number): string => {
-	const kmh = Math.round(speed * 3.6);
-	return `${kmh} km/h`;
-};
-
-/**
- * Formats humidity with percentage
- * @param humidity - Humidity value
- * @returns Formatted humidity (e.g., "65%")
- */
-export const formatHumidity = (humidity: number): string => {
-	return `${humidity}%`;
-};
-
-/**
- * Formats pressure with unit
- * @param pressure - Pressure in hPa
- * @returns Formatted pressure (e.g., "1013 hPa")
- */
-export const formatPressure = (pressure: number): string => {
-	return `${pressure} hPa`;
-};
-
-/**
- * Groups 3-hour forecast items into daily forecasts
- * @param forecastItems - Array of 3-hour forecast items
- * @returns Array of daily forecasts
- */
-export const groupForecastByDay = (forecastItems: any[]): any[] => {
-	const dailyMap = new Map<string, any>();
-
-	forecastItems.forEach(item => {
-		const date = item.dt_txt.split(" ")[0]; // Get date part (YYYY-MM-DD)
-
-		if (!dailyMap.has(date)) {
-			dailyMap.set(date, {
-				date,
-				dt: item.dt,
-				temp_min: item.main.temp_min,
-				temp_max: item.main.temp_max,
-				weather: item.weather,
-				pop: item.pop,
-				items: [item],
-			});
-		} else {
-			const existing = dailyMap.get(date);
-			existing.temp_min = Math.min(existing.temp_min, item.main.temp_min);
-			existing.temp_max = Math.max(existing.temp_max, item.main.temp_max);
-			existing.pop = Math.max(existing.pop, item.pop);
-			existing.items.push(item);
-		}
-	});
-
-	return Array.from(dailyMap.values());
+export const getFeelsLikeDescription = (actual: number, feelsLike: number): string => {
+	const diff = Math.abs(actual - feelsLike);
+	if (diff < 2) return "Similar to actual temperature";
+	if (feelsLike > actual) return `Feels ${diff.toFixed(0)}° warmer`;
+	return `Feels ${diff.toFixed(0)}° cooler`;
 };

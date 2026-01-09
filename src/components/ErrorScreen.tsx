@@ -1,64 +1,33 @@
 /**
- * ErrorScreen Component
- * Displays error message with retry option and animation
+ * Error Screen Component
+ * Displayed when there's an error fetching weather data
  */
 
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useEffect, useRef } from "react";
-import { Animated, StyleSheet, Text, TouchableOpacity } from "react-native";
-import { borderRadius, colors, spacing, typography } from "../theme";
+import React from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { borderRadius, colors, spacing, textStyles } from "../theme";
 
 interface ErrorScreenProps {
 	message: string;
-	onRetry: () => void;
+	onRetry?: () => void;
 }
 
 export const ErrorScreen: React.FC<ErrorScreenProps> = ({ message, onRetry }) => {
-	const shakeAnim = useRef(new Animated.Value(0)).current;
-	const fadeAnim = useRef(new Animated.Value(0)).current;
-
-	useEffect(() => {
-		// Shake animation for icon
-		Animated.sequence([
-			Animated.timing(shakeAnim, { toValue: 8, duration: 100, useNativeDriver: true }),
-			Animated.timing(shakeAnim, { toValue: -8, duration: 100, useNativeDriver: true }),
-			Animated.timing(shakeAnim, { toValue: 6, duration: 100, useNativeDriver: true }),
-			Animated.timing(shakeAnim, { toValue: 0, duration: 100, useNativeDriver: true }),
-		]).start();
-
-		// Fade in content
-		Animated.timing(fadeAnim, {
-			toValue: 1,
-			duration: 600,
-			useNativeDriver: true,
-		}).start();
-	}, [fadeAnim, shakeAnim]);
-
 	return (
-		<LinearGradient colors={colors.gradients.clouds} style={styles.container}>
-			<Animated.View
-				style={[
-					styles.content,
-					{
-						opacity: fadeAnim,
-					},
-				]}
-			>
-				<Animated.View
-					style={{
-						transform: [{ translateX: shakeAnim }],
-					}}
-				>
-					<Ionicons name="alert-circle" size={72} color={colors.text.light} style={styles.icon} />
-				</Animated.View>
-				<Text style={styles.title}>Weather hiccup</Text>
+		<LinearGradient colors={colors.clearDay.gradient} style={styles.container}>
+			<View style={styles.content}>
+				<Ionicons name="cloud-offline-outline" size={80} color={colors.white} />
+				<Text style={styles.title}>Oops!</Text>
 				<Text style={styles.message}>{message}</Text>
-				<TouchableOpacity style={styles.retryButton} onPress={onRetry} activeOpacity={0.75}>
-					<Ionicons name="refresh" size={18} color={colors.text.light} />
-					<Text style={styles.retryText}>Try Again</Text>
-				</TouchableOpacity>
-			</Animated.View>
+				{onRetry && (
+					<TouchableOpacity style={styles.button} onPress={onRetry} activeOpacity={0.7}>
+						<Ionicons name="refresh" size={20} color={colors.white} />
+						<Text style={styles.buttonText}>Try Again</Text>
+					</TouchableOpacity>
+				)}
+			</View>
 		</LinearGradient>
 	);
 };
@@ -68,53 +37,34 @@ const styles = StyleSheet.create({
 		flex: 1,
 		justifyContent: "center",
 		alignItems: "center",
-		padding: spacing.xl,
 	},
 	content: {
 		alignItems: "center",
-		backgroundColor: colors.glass,
-		borderRadius: borderRadius["2xl"],
-		paddingVertical: spacing.xl,
-		paddingHorizontal: spacing.xl,
-		borderWidth: 1,
-		borderColor: colors.glassBorder,
-		shadowColor: colors.shadow,
-		shadowOffset: { width: 0, height: 10 },
-		shadowOpacity: 0.25,
-		shadowRadius: 18,
-		elevation: 10,
-	},
-	icon: {
-		marginBottom: spacing.lg,
-		opacity: 0.9,
+		gap: spacing.lg,
+		paddingHorizontal: spacing["2xl"],
 	},
 	title: {
-		fontSize: typography.sizes["2xl"],
-		fontFamily: typography.fonts.title,
-		color: colors.text.light,
-		marginBottom: spacing.sm,
+		...textStyles.h2,
+		color: colors.white,
 	},
 	message: {
-		fontSize: typography.sizes.base,
-		fontFamily: typography.fonts.body,
-		color: colors.text.muted,
+		...textStyles.body,
+		color: colors.white,
 		textAlign: "center",
-		marginBottom: spacing.lg,
+		opacity: 0.9,
 	},
-	retryButton: {
+	button: {
 		flexDirection: "row",
 		alignItems: "center",
-		backgroundColor: colors.surface,
+		gap: spacing.sm,
+		backgroundColor: "rgba(255, 255, 255, 0.2)",
 		paddingHorizontal: spacing.xl,
 		paddingVertical: spacing.md,
-		borderRadius: borderRadius.full,
-		gap: spacing.sm,
-		borderWidth: 1,
-		borderColor: colors.glassBorder,
+		borderRadius: borderRadius.xl,
+		marginTop: spacing.lg,
 	},
-	retryText: {
-		fontSize: typography.sizes.base,
-		fontFamily: typography.fonts.label,
-		color: colors.text.light,
+	buttonText: {
+		...textStyles.button,
+		color: colors.white,
 	},
 });

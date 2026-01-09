@@ -1,55 +1,139 @@
 /**
- * Color Palette for the Weather App
- * Defines a cohesive palette with atmospheric gradients
+ * Color Palette
+ * Inspired by modern weather apps with dynamic weather-based themes
  */
 
 export const colors = {
-	// Primary Colors
-	primary: "#1C4E7A",
-	secondary: "#2E86AB",
-	accent: "#F6C453",
-	accentWarm: "#F18F5C",
-
-	// Background Gradients for Different Weather Conditions
-	gradients: {
-		clear: ["#2E86AB", "#4BB4E6", "#C6E7FF"] as const,
-		clouds: ["#304255", "#556778", "#8FA0AF"] as const,
-		rain: ["#1E2F44", "#2E5B7A", "#4E7FA7"] as const,
-		thunderstorm: ["#1A1F2B", "#2B3645", "#3E4B5E"] as const,
-		snow: ["#B7D4E6", "#8EB5D4", "#6D9CBD"] as const,
-		mist: ["#6F7F8B", "#93A3AE", "#BAC7D0"] as const,
-		drizzle: ["#2D6D76", "#4B9AA6", "#85C8CC"] as const,
+	// Primary weather states
+	clearDay: {
+		primary: "#47BFDF",
+		secondary: "#4A90E2",
+		gradient: ["#87CEEB", "#4A90E2", "#1E3A8A"] as const,
+		text: "#FFFFFF",
+		textSecondary: "rgba(255, 255, 255, 0.8)",
+		card: "rgba(255, 255, 255, 0.15)",
+		cardBorder: "rgba(255, 255, 255, 0.2)",
+	},
+	clearNight: {
+		primary: "#1E293B",
+		secondary: "#334155",
+		gradient: ["#0F172A", "#1E293B", "#334155"] as const,
+		text: "#FFFFFF",
+		textSecondary: "rgba(255, 255, 255, 0.7)",
+		card: "rgba(255, 255, 255, 0.1)",
+		cardBorder: "rgba(255, 255, 255, 0.15)",
+	},
+	cloudy: {
+		primary: "#6B7280",
+		secondary: "#9CA3AF",
+		gradient: ["#6B7280", "#9CA3AF", "#D1D5DB"] as const,
+		text: "#FFFFFF",
+		textSecondary: "rgba(255, 255, 255, 0.8)",
+		card: "rgba(255, 255, 255, 0.15)",
+		cardBorder: "rgba(255, 255, 255, 0.2)",
+	},
+	rainy: {
+		primary: "#4A5568",
+		secondary: "#718096",
+		gradient: ["#2D3748", "#4A5568", "#718096"] as const,
+		text: "#FFFFFF",
+		textSecondary: "rgba(255, 255, 255, 0.8)",
+		card: "rgba(255, 255, 255, 0.12)",
+		cardBorder: "rgba(255, 255, 255, 0.18)",
+	},
+	stormy: {
+		primary: "#1F2937",
+		secondary: "#374151",
+		gradient: ["#111827", "#1F2937", "#374151"] as const,
+		text: "#FFFFFF",
+		textSecondary: "rgba(255, 255, 255, 0.75)",
+		card: "rgba(255, 255, 255, 0.1)",
+		cardBorder: "rgba(255, 255, 255, 0.15)",
+	},
+	snowy: {
+		primary: "#E0F2FE",
+		secondary: "#BAE6FD",
+		gradient: ["#F0F9FF", "#E0F2FE", "#BAE6FD"] as const,
+		text: "#1E293B",
+		textSecondary: "rgba(30, 41, 59, 0.7)",
+		card: "rgba(255, 255, 255, 0.25)",
+		cardBorder: "rgba(255, 255, 255, 0.3)",
 	},
 
-	// UI Colors
-	background: "#0D1B2A",
-	surface: "rgba(255, 255, 255, 0.14)",
-	surfaceStrong: "rgba(255, 255, 255, 0.24)",
-	glass: "rgba(255, 255, 255, 0.12)",
-	glassStrong: "rgba(255, 255, 255, 0.22)",
-	glassBorder: "rgba(255, 255, 255, 0.28)",
+	// Base colors
+	white: "#FFFFFF",
+	black: "#000000",
 
-	// Text Colors
-	text: {
-		primary: "#102435",
-		secondary: "#4D6475",
-		light: "#F8FBFF",
-		muted: "rgba(248, 251, 255, 0.7)",
-		dark: "#0E1E2B",
+	// Semantic colors
+	success: "#10B981",
+	warning: "#F59E0B",
+	error: "#EF4444",
+	info: "#3B82F6",
+
+	// Neutral colors
+	gray: {
+		50: "#F9FAFB",
+		100: "#F3F4F6",
+		200: "#E5E7EB",
+		300: "#D1D5DB",
+		400: "#9CA3AF",
+		500: "#6B7280",
+		600: "#4B5563",
+		700: "#374151",
+		800: "#1F2937",
+		900: "#111827",
 	},
 
-	// Status Colors
-	success: "#1FBBA6",
-	warning: "#F6C453",
-	error: "#E35C5C",
-	info: "#4BB4E6",
+	// Weather condition colors
+	temperature: {
+		hot: "#EF4444",
+		warm: "#F59E0B",
+		moderate: "#10B981",
+		cool: "#3B82F6",
+		cold: "#8B5CF6",
+	},
 
-	// Opacity Variants
-	overlay: "rgba(10, 20, 31, 0.35)",
-	shadow: "rgba(8, 16, 24, 0.35)",
-	border: "rgba(255, 255, 255, 0.18)",
-	glow: "rgba(255, 255, 255, 0.18)",
-	glowStrong: "rgba(246, 196, 83, 0.22)",
+	// Overlay colors
+	overlay: {
+		light: "rgba(255, 255, 255, 0.1)",
+		medium: "rgba(255, 255, 255, 0.2)",
+		dark: "rgba(0, 0, 0, 0.3)",
+	},
 };
 
-export type GradientKey = keyof typeof colors.gradients;
+/**
+ * Get theme based on weather condition and time
+ */
+export const getWeatherTheme = (weatherMain: string, isNight: boolean = false) => {
+	const condition = weatherMain.toLowerCase();
+
+	if (condition.includes("clear")) {
+		return isNight ? colors.clearNight : colors.clearDay;
+	}
+	if (condition.includes("cloud")) {
+		return colors.cloudy;
+	}
+	if (condition.includes("rain") || condition.includes("drizzle")) {
+		return colors.rainy;
+	}
+	if (condition.includes("thunder") || condition.includes("storm")) {
+		return colors.stormy;
+	}
+	if (condition.includes("snow")) {
+		return colors.snowy;
+	}
+
+	// Default to clear day
+	return colors.clearDay;
+};
+
+/**
+ * Get temperature color based on celsius value
+ */
+export const getTemperatureColor = (temp: number): string => {
+	if (temp >= 30) return colors.temperature.hot;
+	if (temp >= 20) return colors.temperature.warm;
+	if (temp >= 10) return colors.temperature.moderate;
+	if (temp >= 0) return colors.temperature.cool;
+	return colors.temperature.cold;
+};

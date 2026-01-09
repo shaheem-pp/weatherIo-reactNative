@@ -4,11 +4,12 @@
  */
 
 import { useEffect, useState } from "react";
-import { getCurrentWeather } from "../services/weatherService";
-import type { Coordinates, CurrentWeather } from "../types/weather";
+import { getWeatherData } from "../services/weatherService";
+import type { Coordinates, CurrentWeather, ForecastResponse } from "../types/weather";
 
 interface WeatherState {
 	currentWeather: CurrentWeather | null;
+	forecast: ForecastResponse | null;
 	loading: boolean;
 	error: string | null;
 }
@@ -16,6 +17,7 @@ interface WeatherState {
 export const useWeather = (coordinates: Coordinates | null) => {
 	const [state, setState] = useState<WeatherState>({
 		currentWeather: null,
+		forecast: null,
 		loading: false,
 		error: null,
 	});
@@ -26,30 +28,36 @@ export const useWeather = (coordinates: Coordinates | null) => {
 		try {
 			setState(prev => ({ ...prev, loading: true, error: null }));
 
-			const currentWeather = await getCurrentWeather(coordinates);
+			const data = await getWeatherData(coordinates);
 
 			setState({
-				currentWeather,
+				currentWeather: data.currentWeather,
+				forecast: data.forecast,
 				loading: false,
 				error: null,
 			});
 		} catch (error) {
 			setState({
 				currentWeather: null,
+				forecast: null,
 				loading: false,
 				error: error instanceof Error ? error.message : "Failed to fetch weather data",
 			});
 		}
 	};
 
+	const refetch = () => {
+		fetchWeather();
+	};
+
 	useEffect(() => {
 		if (coordinates) {
 			fetchWeather();
 		}
-	}, [coordinates]);
+	}, [coordinates?.latitude, coordinates?.longitude]);
 
 	return {
 		...state,
-		refetch: fetchWeather,
+		refetch,
 	};
 };

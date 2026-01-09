@@ -1,11 +1,8 @@
 /**
- * Theme Configuration
- * Central export for all theme-related constants
+ * Theme exports
+ * Central theme export file
  */
 
-export { colors } from "./colors";
-export { borderRadius, spacing } from "./spacing";
-export { typography } from "./typography";
-
-// Re-export types
-export type { GradientKey } from "./colors";
+export * from "./colors";
+export * from "./spacing";
+export * from "./typography";
