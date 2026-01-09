@@ -16,7 +16,7 @@ import {
 	TouchableOpacity,
 	View,
 } from "react-native";
-import { POPULAR_CITIES } from "../constants/cities";
+import { CITIES } from "../constants/cities";
 import { borderRadius, colors, spacing, typography } from "../theme";
 
 interface SearchBarProps {
@@ -34,13 +34,16 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 	const [searchText, setSearchText] = useState("");
 	const [showSuggestions, setShowSuggestions] = useState(false);
 	const [fadeAnim] = useState(new Animated.Value(0));
+	const [isSelectingCity, setIsSelectingCity] = useState(false);
 
 	const handleSearch = (city?: string) => {
 		const searchValue = (city || searchText).trim();
 		if (searchValue) {
 			onSearch(searchValue);
-			setSearchText("");
+			// Immediately hide suggestions and clear text
 			setShowSuggestions(false);
+			setSearchText("");
+			setIsSelectingCity(false);
 			Keyboard.dismiss();
 		}
 	};
@@ -60,31 +63,38 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 	};
 
 	const handleBlur = () => {
-		// Delay to allow city selection
+		// Don't hide suggestions if user is selecting a city
+		if (isSelectingCity) {
+			return;
+		}
+		// Delay to allow city selection to complete
 		setTimeout(() => {
-			Animated.timing(fadeAnim, {
-				toValue: 0,
-				duration: 200,
-				useNativeDriver: true,
-			}).start(() => setShowSuggestions(false));
-		}, 150);
+			if (!isSelectingCity) {
+				setShowSuggestions(false);
+				Animated.timing(fadeAnim, {
+					toValue: 0,
+					duration: 200,
+					useNativeDriver: true,
+				}).start();
+			}
+		}, 200);
 	};
 
 	const filteredCities = useMemo(() => {
 		const query = searchText.trim().toLowerCase();
 		if (!query) {
-			return POPULAR_CITIES.slice(0, DEFAULT_SUGGESTION_COUNT);
+			return CITIES.slice(0, DEFAULT_SUGGESTION_COUNT);
 		}
 
-		return POPULAR_CITIES.filter(city => city.search.includes(query)).slice(
-			0,
-			MATCHING_SUGGESTION_COUNT
-		);
+		return CITIES.filter(
+			city =>
+				city.name.toLowerCase().includes(query) ||
+				city.country.toLowerCase().includes(query) ||
+				city.display.toLowerCase().includes(query)
+		).slice(0, MATCHING_SUGGESTION_COUNT);
 	}, [searchText]);
 
-	const suggestionHeader = searchText.trim()
-		? "Matching Cities"
-		: "Major Cities";
+	const suggestionHeader = searchText.trim() ? "Matching Cities" : "Major Cities";
 
 	return (
 		<View style={styles.container}>
@@ -128,7 +138,11 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 								<TouchableOpacity
 									key={`${item.name}-${item.country}`}
 									style={styles.suggestionItem}
-									onPress={() => handleSearch(`${item.name},${item.country}`)}
+									onPressIn={() => setIsSelectingCity(true)}
+									onPress={() => {
+										handleSearch(`${item.name},${item.country}`);
+									}}
+									activeOpacity={0.7}
 								>
 									<Ionicons name="location-outline" size={18} color={colors.text.light} />
 									<Text style={styles.suggestionText}>{item.display}</Text>
@@ -188,7 +202,6 @@ const styles = StyleSheet.create({
 		elevation: 10,
 		borderWidth: 1,
 		borderColor: colors.glassBorder,
-		overflow: "hidden",
 	},
 	suggestionsList: {
 		maxHeight: 300,

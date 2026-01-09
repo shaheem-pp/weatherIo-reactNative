@@ -1,6 +1,6 @@
 /**
  * HomeScreen Component
- * Main screen displaying current weather and forecast
+ * Main screen displaying current weather with city picker
  */
 
 import { Ionicons } from "@expo/vector-icons";
@@ -16,12 +16,14 @@ import {
 	View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ErrorScreen, LoadingScreen, SearchBar, WeatherCard } from "../components";
+import { CityPicker, ErrorScreen, LoadingScreen, WeatherCard } from "../components";
+import type { City } from "../constants/cities";
+import { CITIES } from "../constants/cities";
 import { useLocation, useWeather } from "../hooks";
 import { getCurrentWeatherByCity } from "../services/weatherService";
 import { borderRadius, colors, spacing, typography } from "../theme";
 import type { CurrentWeather } from "../types/weather";
-import { capitalizeWords, formatDate, getWeatherGradient } from "../utils";
+import { formatDate, getWeatherGradient } from "../utils";
 
 export const HomeScreen: React.FC = () => {
 	const [searchedWeather, setSearchedWeather] = useState<CurrentWeather | null>(null);
@@ -48,15 +50,15 @@ export const HomeScreen: React.FC = () => {
 	const currentWeather = searchedWeather || locationWeather;
 	const isShowingSearchResult = searchedWeather !== null;
 
-	// Handle city search
-	const handleCitySearch = async (cityName: string) => {
+	// Handle city selection from picker
+	const handleCitySelect = async (city: City) => {
 		try {
 			setSearchLoading(true);
 			setSearchError(null);
-			const weather = await getCurrentWeatherByCity(cityName);
+			const weather = await getCurrentWeatherByCity(city.name);
 			setSearchedWeather(weather);
 		} catch (error) {
-			setSearchError(error instanceof Error ? error.message : "Failed to search city");
+			setSearchError(error instanceof Error ? error.message : "Failed to load city weather");
 			setSearchedWeather(null);
 		} finally {
 			setSearchLoading(false);
@@ -72,8 +74,14 @@ export const HomeScreen: React.FC = () => {
 	// Handle refresh
 	const handleRefresh = () => {
 		if (isShowingSearchResult && searchedWeather) {
-			// Re-search the same city
-			handleCitySearch(searchedWeather.name);
+			// Re-fetch the same city
+			handleCitySelect({
+				name: searchedWeather.name,
+				country: searchedWeather.sys.country,
+				lat: searchedWeather.coord.lat,
+				lon: searchedWeather.coord.lon,
+				display: `${searchedWeather.name}, ${searchedWeather.sys.country}`,
+			});
 		} else if (coordinates) {
 			refetchWeather();
 		} else {
@@ -116,7 +124,6 @@ export const HomeScreen: React.FC = () => {
 
 	// Get gradient based on weather condition
 	const gradientColors = colors.gradients[getWeatherGradient(currentWeather.weather[0].main)];
-	const conditionLabel = capitalizeWords(currentWeather.weather[0].main);
 
 	return (
 		<LinearGradient colors={gradientColors} style={styles.container}>
@@ -140,28 +147,20 @@ export const HomeScreen: React.FC = () => {
 							<Text style={styles.title}>Weatherio</Text>
 							<Text style={styles.subtitle}>{formatDate(currentWeather.dt)}</Text>
 						</View>
-						<View style={styles.headerBadge}>
-							<Ionicons name="sparkles" size={14} color={colors.text.light} />
-							<Text style={styles.headerBadgeText}>{conditionLabel}</Text>
-						</View>
 					</View>
 
-					{/* Search Bar */}
-					<SearchBar onSearch={handleCitySearch} placeholder="Search for a city..." />
+					{/* City Picker */}
+					<CityPicker cities={CITIES} onSelectCity={handleCitySelect} />
 
-					{/* Search Result Badge */}
+					{/* Clear Button - Show when displaying search result */}
 					{isShowingSearchResult && (
-						<View style={styles.searchBadge}>
-							<Ionicons name="search" size={14} color={colors.text.light} />
-							<Text style={styles.searchBadgeText}>Search Result</Text>
-						</View>
-					)}
-
-					{/* Show current location button when displaying search result */}
-					{isShowingSearchResult && (
-						<TouchableOpacity style={styles.locationButton} onPress={handleClearSearch}>
-							<Ionicons name="locate" size={18} color={colors.text.light} />
-							<Text style={styles.locationButtonText}>Back to Current Location</Text>
+						<TouchableOpacity
+							style={styles.clearButton}
+							onPress={handleClearSearch}
+							activeOpacity={0.7}
+						>
+							<Ionicons name="close-circle" size={20} color={colors.text.light} />
+							<Text style={styles.clearButtonText}>Clear & Return to Current Location</Text>
 						</TouchableOpacity>
 					)}
 
@@ -181,9 +180,10 @@ const styles = StyleSheet.create({
 		flex: 1,
 	},
 	scrollContent: {
+		flexGrow: 1,
 		padding: spacing.lg,
 		paddingTop: spacing.md,
-		paddingBottom: spacing["2xl"],
+		paddingBottom: spacing.lg,
 	},
 	header: {
 		flexDirection: "row",
@@ -213,48 +213,26 @@ const styles = StyleSheet.create({
 		borderWidth: 1,
 		borderColor: colors.glassBorder,
 	},
-	headerBadgeText: {
-		fontSize: typography.sizes.sm,
-		fontFamily: typography.fonts.label,
-		color: colors.text.light,
-	},
-	searchBadge: {
-		flexDirection: "row",
-		alignItems: "center",
-		gap: spacing.xs,
-		alignSelf: "flex-start",
-		marginBottom: spacing.sm,
-		backgroundColor: "rgba(15, 26, 38, 0.35)",
-		paddingHorizontal: spacing.md,
-		paddingVertical: spacing.xs,
-		borderRadius: borderRadius.full,
-	},
-	searchBadgeText: {
-		fontSize: typography.sizes.xs,
-		fontFamily: typography.fonts.label,
-		color: colors.text.muted,
-		textTransform: "uppercase",
-		letterSpacing: 1,
-	},
-	locationButton: {
+	clearButton: {
 		flexDirection: "row",
 		alignItems: "center",
 		justifyContent: "center",
-		backgroundColor: colors.surface,
+		backgroundColor: "rgba(255, 255, 255, 0.25)",
 		borderRadius: borderRadius.full,
 		paddingVertical: spacing.sm,
 		paddingHorizontal: spacing.lg,
 		marginBottom: spacing.lg,
 		gap: spacing.sm,
-		borderWidth: 1,
-		borderColor: colors.glassBorder,
+		shadowColor: "#000",
+		shadowOffset: { width: 0, height: 2 },
+		shadowOpacity: 0.1,
+		shadowRadius: 4,
+		elevation: 3,
 	},
-	locationButtonText: {
+	clearButtonText: {
 		fontSize: typography.sizes.sm,
-		fontFamily: typography.fonts.label,
+		fontWeight: typography.weights.semibold,
 		color: colors.text.light,
-		textTransform: "uppercase",
-		letterSpacing: 0.8,
 	},
 	glowTop: {
 		position: "absolute",

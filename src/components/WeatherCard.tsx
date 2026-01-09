@@ -5,7 +5,7 @@
 
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useRef } from "react";
-import { Animated, StyleSheet, Text, View } from "react-native";
+import { Animated, Dimensions, ScrollView, StyleSheet, Text, View } from "react-native";
 import { borderRadius, colors, spacing, typography } from "../theme";
 import type { CurrentWeather } from "../types/weather";
 import {
@@ -83,9 +83,7 @@ export const WeatherCard: React.FC<WeatherCardProps> = ({ weather }) => {
 			<View style={styles.heroRow}>
 				<View style={styles.tempColumn}>
 					<Text style={styles.temperature}>{formatTemperature(weather.main.temp)}</Text>
-					<Text style={styles.condition}>
-						{capitalizeWords(weather.weather[0].description)}
-					</Text>
+					<Text style={styles.condition}>{capitalizeWords(weather.weather[0].description)}</Text>
 					<View style={styles.feelsLikeContainer}>
 						<Ionicons name="thermometer-outline" size={14} color={colors.text.muted} />
 						<Text style={styles.feelsLike}>
@@ -101,65 +99,71 @@ export const WeatherCard: React.FC<WeatherCardProps> = ({ weather }) => {
 					<View style={styles.highLowPill}>
 						<View style={styles.highLowItem}>
 							<Ionicons name="arrow-up" size={14} color={colors.text.light} />
-							<Text style={styles.highLowValue}>
-								{formatTemperature(weather.main.temp_max)}
-							</Text>
+							<Text style={styles.highLowValue}>{formatTemperature(weather.main.temp_max)}</Text>
 						</View>
 						<View style={styles.highLowDivider} />
 						<View style={styles.highLowItem}>
 							<Ionicons name="arrow-down" size={14} color={colors.text.light} />
-							<Text style={styles.highLowValue}>
-								{formatTemperature(weather.main.temp_min)}
-							</Text>
+							<Text style={styles.highLowValue}>{formatTemperature(weather.main.temp_min)}</Text>
 						</View>
 					</View>
 				</View>
 			</View>
 
-			<View style={styles.metricsGrid}>
-				<DetailTile
-					icon="water-outline"
-					label="Humidity"
-					value={formatHumidity(weather.main.humidity)}
-					animateKey={weather.dt}
-					delay={100}
-				/>
-				<DetailTile
-					icon="speedometer-outline"
-					label="Wind"
-					value={formatWindSpeed(weather.wind.speed)}
-					extraInfo={getWindDirection(weather.wind.deg)}
-					animateKey={weather.dt}
-					delay={180}
-				/>
-				<DetailTile
-					icon="analytics-outline"
-					label="Pressure"
-					value={formatPressure(weather.main.pressure)}
-					animateKey={weather.dt}
-					delay={260}
-				/>
-				<DetailTile
-					icon="eye-outline"
-					label="Visibility"
-					value={`${(weather.visibility / 1000).toFixed(1)} km`}
-					animateKey={weather.dt}
-					delay={340}
-				/>
-				<DetailTile
-					icon="sunny-outline"
-					label="Sunrise"
-					value={formatTime(weather.sys.sunrise)}
-					animateKey={weather.dt}
-					delay={420}
-				/>
-				<DetailTile
-					icon="moon-outline"
-					label="Sunset"
-					value={formatTime(weather.sys.sunset)}
-					animateKey={weather.dt}
-					delay={500}
-				/>
+			{/* Horizontal Scrollable Metrics */}
+			<View style={styles.metricsSection}>
+				<Text style={styles.metricsSectionTitle}>Weather Details</Text>
+				<ScrollView
+					horizontal
+					showsHorizontalScrollIndicator={false}
+					contentContainerStyle={styles.metricsScroll}
+					decelerationRate="fast"
+					snapToInterval={168} // Card width + gap
+				>
+					<DetailTile
+						icon="water-outline"
+						label="Humidity"
+						value={formatHumidity(weather.main.humidity)}
+						animateKey={weather.dt}
+						delay={100}
+					/>
+					<DetailTile
+						icon="speedometer-outline"
+						label="Wind"
+						value={formatWindSpeed(weather.wind.speed)}
+						extraInfo={getWindDirection(weather.wind.deg)}
+						animateKey={weather.dt}
+						delay={180}
+					/>
+					<DetailTile
+						icon="analytics-outline"
+						label="Pressure"
+						value={formatPressure(weather.main.pressure)}
+						animateKey={weather.dt}
+						delay={260}
+					/>
+					<DetailTile
+						icon="eye-outline"
+						label="Visibility"
+						value={`${(weather.visibility / 1000).toFixed(1)} km`}
+						animateKey={weather.dt}
+						delay={340}
+					/>
+					<DetailTile
+						icon="sunny-outline"
+						label="Sunrise"
+						value={formatTime(weather.sys.sunrise)}
+						animateKey={weather.dt}
+						delay={420}
+					/>
+					<DetailTile
+						icon="moon-outline"
+						label="Sunset"
+						value={formatTime(weather.sys.sunset)}
+						animateKey={weather.dt}
+						delay={500}
+					/>
+				</ScrollView>
 			</View>
 		</Animated.View>
 	);
@@ -231,10 +235,10 @@ const DetailTile: React.FC<DetailTileProps> = ({
 
 const styles = StyleSheet.create({
 	card: {
+		flex: 1,
 		backgroundColor: colors.glass,
 		borderRadius: borderRadius["2xl"],
 		padding: spacing.xl,
-		marginBottom: spacing.lg,
 		borderWidth: 1,
 		borderColor: colors.glassBorder,
 		shadowColor: colors.shadow,
@@ -242,6 +246,7 @@ const styles = StyleSheet.create({
 		shadowOpacity: 0.25,
 		shadowRadius: 24,
 		elevation: 12,
+		minHeight: Dimensions.get("window").height * 0.65,
 	},
 	locationRow: {
 		flexDirection: "row",
@@ -274,11 +279,18 @@ const styles = StyleSheet.create({
 		fontSize: typography.sizes.lg,
 		fontFamily: typography.fonts.title,
 		color: colors.text.light,
+		textShadowColor: "rgba(0, 0, 0, 0.3)",
+		textShadowOffset: { width: 0, height: 1 },
+		textShadowRadius: 2,
 	},
 	timeText: {
 		fontSize: typography.sizes.sm,
 		fontFamily: typography.fonts.label,
-		color: colors.text.muted,
+		color: colors.text.light,
+		opacity: 0.85,
+		textShadowColor: "rgba(0, 0, 0, 0.25)",
+		textShadowOffset: { width: 0, height: 1 },
+		textShadowRadius: 2,
 	},
 	heroRow: {
 		flexDirection: "row",
@@ -294,12 +306,18 @@ const styles = StyleSheet.create({
 		fontFamily: typography.fonts.display,
 		color: colors.text.light,
 		letterSpacing: -2,
+		textShadowColor: "rgba(0, 0, 0, 0.4)",
+		textShadowOffset: { width: 0, height: 2 },
+		textShadowRadius: 4,
 	},
 	condition: {
 		fontSize: typography.sizes.lg,
 		fontFamily: typography.fonts.title,
 		color: colors.text.light,
 		marginTop: spacing.xs,
+		textShadowColor: "rgba(0, 0, 0, 0.3)",
+		textShadowOffset: { width: 0, height: 1 },
+		textShadowRadius: 2,
 	},
 	feelsLikeContainer: {
 		flexDirection: "row",
@@ -310,7 +328,11 @@ const styles = StyleSheet.create({
 	feelsLike: {
 		fontSize: typography.sizes.sm,
 		fontFamily: typography.fonts.body,
-		color: colors.text.muted,
+		color: colors.text.light,
+		opacity: 0.85,
+		textShadowColor: "rgba(0, 0, 0, 0.25)",
+		textShadowOffset: { width: 0, height: 1 },
+		textShadowRadius: 2,
 	},
 	iconColumn: {
 		alignItems: "center",
@@ -343,26 +365,44 @@ const styles = StyleSheet.create({
 		fontSize: typography.sizes.base,
 		fontFamily: typography.fonts.label,
 		color: colors.text.light,
+		textShadowColor: "rgba(0, 0, 0, 0.25)",
+		textShadowOffset: { width: 0, height: 1 },
+		textShadowRadius: 2,
 	},
 	highLowDivider: {
 		width: 1,
 		height: 18,
 		backgroundColor: colors.border,
 	},
-	metricsGrid: {
+	metricsSection: {
 		marginTop: spacing.xl,
-		flexDirection: "row",
-		flexWrap: "wrap",
+		flex: 1,
+	},
+	metricsSectionTitle: {
+		fontSize: typography.sizes.base,
+		fontFamily: typography.fonts.title,
+		color: colors.text.light,
+		marginBottom: spacing.md,
+		paddingHorizontal: spacing.xs,
+		letterSpacing: 0.5,
+		textTransform: "uppercase",
+		opacity: 0.9,
+		textShadowColor: "rgba(0, 0, 0, 0.3)",
+		textShadowOffset: { width: 0, height: 1 },
+		textShadowRadius: 2,
+	},
+	metricsScroll: {
+		paddingHorizontal: spacing.xs,
 		gap: spacing.md,
 	},
 	detailCard: {
-		flexBasis: "48%",
-		flexGrow: 1,
-		backgroundColor: colors.surface,
-		borderRadius: borderRadius.lg,
-		padding: spacing.md,
+		width: 156,
+		backgroundColor: "rgba(255, 255, 255, 0.20)",
+		borderRadius: borderRadius.xl,
+		padding: spacing.lg,
 		borderWidth: 1,
-		borderColor: colors.glassBorder,
+		borderColor: "rgba(255, 255, 255, 0.35)",
+		marginRight: spacing.md,
 	},
 	detailHeader: {
 		flexDirection: "row",
@@ -375,17 +415,28 @@ const styles = StyleSheet.create({
 		fontFamily: typography.fonts.label,
 		textTransform: "uppercase",
 		letterSpacing: 0.8,
-		color: colors.text.muted,
+		color: colors.text.light,
+		opacity: 0.75,
+		textShadowColor: "rgba(0, 0, 0, 0.2)",
+		textShadowOffset: { width: 0, height: 1 },
+		textShadowRadius: 1,
 	},
 	detailValue: {
 		fontSize: typography.sizes.xl,
 		fontFamily: typography.fonts.title,
 		color: colors.text.light,
+		textShadowColor: "rgba(0, 0, 0, 0.3)",
+		textShadowOffset: { width: 0, height: 1 },
+		textShadowRadius: 2,
 	},
 	detailExtra: {
 		fontSize: typography.sizes.sm,
 		fontFamily: typography.fonts.label,
-		color: colors.text.muted,
+		color: colors.text.light,
+		opacity: 0.75,
 		marginTop: spacing.xs,
+		textShadowColor: "rgba(0, 0, 0, 0.2)",
+		textShadowOffset: { width: 0, height: 1 },
+		textShadowRadius: 1,
 	},
 });

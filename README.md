@@ -146,11 +146,15 @@ curl "https://api.openweathermap.org/data/2.5/weather?lat=40.7128&lon=-74.0060&a
 - Visibility distance (km)
 
 ### City Search Features
-- **Smart Dropdown**: Shows 20 popular cities worldwide
-- **Live Filtering**: Suggestions update as you type
-- **Animated Suggestions**: Smooth fade-in/fade-out (200ms)
-- **Back to Location**: Easy return to current location weather
-- **Icons**: Location marker for each city with chevron indicator
+- **Native Modal Picker**: Full-screen bottom sheet dropdown (feels native on iOS & Android)
+- **150+ Cities**: Comprehensive list from OpenWeatherMap CSV
+- **Real-Time Search**: Instant filtering as you type
+- **Smart Filtering**: Searches both city names and countries
+- **Clear Button**: Easy return to current location weather
+- **Native Animations**: Smooth slide-up modal with backdrop
+- **Empty States**: Beautiful feedback when no cities match
+- **Results Counter**: Shows number of matching cities
+- **Touch Optimized**: Large, accessible touch targets
 
 ### Modern UI Design with Animations
 - **Glass-morphism cards** with layered shadows and borders

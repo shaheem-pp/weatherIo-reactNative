@@ -11,6 +11,7 @@ export const spacing = {
 	xl: 32,
 	"2xl": 48,
 	"3xl": 64,
+	"4xl": 80,
 };
 
 /**
@@ -22,5 +23,6 @@ export const borderRadius = {
 	lg: 16,
 	xl: 24,
 	"2xl": 32,
+	"3xl": 40,
 	full: 9999,
 };
